@@ -24,6 +24,7 @@ import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import java.awt.Color;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
@@ -51,6 +52,11 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
       return TranslationHelper.t(this.playerRef, key, fallback, args);
    }
 
+   private boolean isFrenchLanguage() {
+      String lang = TranslationHelper.getLanguageFor(this.playerRef);
+      return lang != null && lang.toLowerCase(Locale.ROOT).startsWith("fr");
+   }
+
    public void build(
       @NonNullDecl Ref<EntityStore> ref, @NonNullDecl UICommandBuilder cmd, @NonNullDecl UIEventBuilder events, @NonNullDecl Store<EntityStore> store
    ) {
@@ -64,9 +70,9 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
          long totalWealth = bankBalance + pocketBalance;
          String symbol = EconomyBridge.getCurrencySymbol();
          events.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of("Action", "Close"), false);
-         cmd.set("#TotalWealth.Text", symbol + this.formatLong(totalWealth));
-         cmd.set("#BankBalance.Text", symbol + this.formatLong(bankBalance));
-         cmd.set("#PocketBalance.Text", symbol + this.formatLong(pocketBalance));
+         cmd.set("#TotalWealth.Text", this.formatWithCurrency(totalWealth, symbol));
+         cmd.set("#BankBalance.Text", this.formatWithCurrency(bankBalance, symbol));
+         cmd.set("#PocketBalance.Text", this.formatWithCurrency(pocketBalance, symbol));
          events.addEventBinding(CustomUIEventBindingType.Activating, "#Tab4Wallet", EventData.of("Tab", "Wallet"), false);
          events.addEventBinding(CustomUIEventBindingType.Activating, "#Tab4Deposit", EventData.of("Tab", "Deposit"), false);
          events.addEventBinding(CustomUIEventBindingType.Activating, "#Tab4Withdraw", EventData.of("Tab", "Withdraw"), false);
@@ -137,7 +143,11 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
                   long afterBank = bankBalance + amountx;
                   cmd.set(
                      "#DepositPreviewText.Text",
-                     this.t("gui.bank.deposit.preview", "After: Bank {0} (+{1})", symbol + this.formatLong(afterBank), symbol + this.formatLong(amountx))
+                     this.t(
+                        "gui.bank.deposit.preview",
+                        "After: Bank {0} (+{1})",
+                        this.formatWithCurrency(afterBank, symbol),
+                        this.formatWithCurrency(amountx, symbol))
                   );
                   this.renderCoinPreview(cmd, "#DepositCoinRow", amountx, true);
                }
@@ -150,7 +160,11 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
                   long afterPocket = pocketBalance + amount;
                   cmd.set(
                      "#WithdrawPreviewText.Text",
-                     this.t("gui.bank.withdraw.preview", "After: Pocket {0} (+{1})", symbol + this.formatLong(afterPocket), symbol + this.formatLong(amount))
+                     this.t(
+                        "gui.bank.withdraw.preview",
+                        "After: Pocket {0} (+{1})",
+                        this.formatWithCurrency(afterPocket, symbol),
+                        this.formatWithCurrency(amount, symbol))
                   );
                   this.renderCoinPreview(cmd, "#WithdrawCoinRow", amount, false);
                }
@@ -251,7 +265,7 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
          cmd.set(targetRow + "[" + rowIndex + "] #CoinIcon.ItemId", type.getItemId());
          cmd.set(targetRow + "[" + rowIndex + "] #CoinName.Text", this.getCoinName(type));
          cmd.set(targetRow + "[" + rowIndex + "] #CoinCount.Text", "x" + count);
-         cmd.set(targetRow + "[" + rowIndex + "] #CoinValue.Text", symbol + this.formatLong(value));
+         cmd.set(targetRow + "[" + rowIndex + "] #CoinValue.Text", this.formatWithCurrency(value, symbol));
       }
 
       events.addEventBinding(CustomUIEventBindingType.Activating, "#BtnDepositAll", EventData.of("Action", "DepositAll"), false);
@@ -260,8 +274,8 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
    }
 
    private void buildDepositTab(UICommandBuilder cmd, UIEventBuilder events, long pocketBalance, long bankBalance, String symbol) {
-      cmd.set("#DepositFromValue.Text", symbol + this.formatLong(pocketBalance));
-      cmd.set("#DepositToValue.Text", symbol + this.formatLong(bankBalance));
+      cmd.set("#DepositFromValue.Text", this.formatWithCurrency(pocketBalance, symbol));
+      cmd.set("#DepositToValue.Text", this.formatWithCurrency(bankBalance, symbol));
       cmd.set("#DepositAmountInput.Value", this.amountInput);
       events.addEventBinding(CustomUIEventBindingType.ValueChanged, "#DepositAmountInput", EventData.of("@AmountInput", "#DepositAmountInput.Value"), false);
       events.addEventBinding(CustomUIEventBindingType.Activating, "#DepositQuick25", EventData.of("Action", "Quick25"), false);
@@ -274,7 +288,11 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
          cmd.set("#DepositPreview.Visible", true);
          cmd.set(
             "#DepositPreviewText.Text",
-            this.t("gui.bank.deposit.preview", "After: Bank {0} (+{1})", symbol + this.formatLong(bankBalance + amount), symbol + this.formatLong(amount))
+            this.t(
+               "gui.bank.deposit.preview",
+               "After: Bank {0} (+{1})",
+               this.formatWithCurrency(bankBalance + amount, symbol),
+               this.formatWithCurrency(amount, symbol))
          );
          cmd.set("#DepositCoinPreview.Visible", true);
          this.renderCoinPreview(cmd, "#DepositCoinRow", amount, true);
@@ -285,8 +303,8 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
    }
 
    private void buildWithdrawTab(UICommandBuilder cmd, UIEventBuilder events, long pocketBalance, long bankBalance, String symbol) {
-      cmd.set("#WithdrawFromValue.Text", symbol + this.formatLong(bankBalance));
-      cmd.set("#WithdrawToValue.Text", symbol + this.formatLong(pocketBalance));
+      cmd.set("#WithdrawFromValue.Text", this.formatWithCurrency(bankBalance, symbol));
+      cmd.set("#WithdrawToValue.Text", this.formatWithCurrency(pocketBalance, symbol));
       cmd.set("#WithdrawAmountInput.Value", this.amountInput);
       events.addEventBinding(CustomUIEventBindingType.ValueChanged, "#WithdrawAmountInput", EventData.of("@AmountInput", "#WithdrawAmountInput.Value"), false);
       events.addEventBinding(CustomUIEventBindingType.Activating, "#WithdrawQuick25", EventData.of("Action", "Quick25"), false);
@@ -299,7 +317,11 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
          cmd.set("#WithdrawPreview.Visible", true);
          cmd.set(
             "#WithdrawPreviewText.Text",
-            this.t("gui.bank.withdraw.preview", "After: Pocket {0} (+{1})", symbol + this.formatLong(pocketBalance + amount), symbol + this.formatLong(amount))
+            this.t(
+               "gui.bank.withdraw.preview",
+               "After: Pocket {0} (+{1})",
+               this.formatWithCurrency(pocketBalance + amount, symbol),
+               this.formatWithCurrency(amount, symbol))
          );
          cmd.set("#WithdrawCoinPreview.Visible", true);
          this.renderCoinPreview(cmd, "#WithdrawCoinRow", amount, false);
@@ -697,7 +719,10 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
       cmd.set("#QuickActionsLabel.Text", this.t("gui.bank.wallet.quick_actions", "QUICK ACTIONS"));
       cmd.set("#BtnDepositAll.Text", this.t("gui.bank.wallet.deposit_all", "DEPOSIT ALL"));
       cmd.set("#BtnWithdrawAll.Text", this.t("gui.bank.wallet.withdraw_all", "WITHDRAW ALL"));
-      cmd.set("#BtnConsolidate.Text", this.t("gui.bank.wallet.consolidate", "CONSOLIDATE"));
+      cmd.set(
+         "#BtnConsolidate.Text",
+         this.isFrenchLanguage() ? "Conversion auto" : this.t("gui.bank.wallet.consolidate", "CONSOLIDATE")
+      );
       cmd.set("#DepositFromLabel.Text", this.t("gui.bank.deposit.from", "FROM POCKET"));
       cmd.set("#DepositToLabel.Text", this.t("gui.bank.deposit.to", "TO BANK"));
       cmd.set("#DepositAmountLabel.Text", this.t("gui.bank.deposit.amount", "AMOUNT TO DEPOSIT"));
@@ -719,7 +744,7 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
          case WALLET -> this.t("gui.bank.tab.wallet", "WALLET");
          case DEPOSIT -> this.t("gui.bank.tab.deposit", "DEPOSIT");
          case WITHDRAW -> this.t("gui.bank.tab.withdraw", "WITHDRAW");
-         case EXCHANGE -> this.t("gui.bank.tab.exchange", "EXCHANGE");
+         case EXCHANGE -> this.isFrenchLanguage() ? "Convertir" : this.t("gui.bank.tab.exchange", "EXCHANGE");
       };
    }
 
@@ -736,6 +761,15 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
             case ADAMANTITE -> this.t("coins.adamantite", "Adamantite");
          };
       }
+   }
+
+   private String formatWithCurrency(long value, String symbol) {
+      String trimmed = symbol == null ? "" : symbol.trim();
+      String amount = this.formatLong(value);
+      if (trimmed.isEmpty()) {
+         return amount;
+      }
+      return amount + " " + trimmed;
    }
 
    private String formatLong(long value) {

@@ -1,4 +1,4 @@
-ï»¿$E = "Ecotale_Common.ui";
+$E = "Ecotale_Common.ui";
 
 Group #BankRoot {
   Anchor: (Left: 0, Top: 0, Right: 0, Bottom: 0);
@@ -51,7 +51,7 @@ Group #BankRoot {
         }
         
         Label #PocketBalance {
-          Text: "$0";
+          Text: "--";
           Style: (FontSize: 20, TextColor: #FFD700, RenderBold: true, HorizontalAlignment: Center);
         }
       }
@@ -74,7 +74,7 @@ Group #BankRoot {
         }
         
         Label #BankBalance {
-          Text: "$0";
+          Text: "--";
           Style: (FontSize: 20, TextColor: #32CD32, RenderBold: true, HorizontalAlignment: Center);
         }
       }
@@ -97,7 +97,7 @@ Group #BankRoot {
         }
         
         Label #TotalWealth {
-          Text: "$0";
+          Text: "--";
           Style: (FontSize: 20, TextColor: #FFD700, RenderBold: true, HorizontalAlignment: Center);
         }
       }
@@ -265,7 +265,7 @@ Group #BankRoot {
           FlexWeight: 1;
           
           Label #DepositFromLabel { Text: "FROM POCKET"; Style: (FontSize: 10, TextColor: #888888, HorizontalAlignment: Center); }
-          Label #DepositFromValue { Text: "$0"; Style: (FontSize: 20, TextColor: #FFD700, RenderBold: true, HorizontalAlignment: Center); }
+          Label #DepositFromValue { Text: "--"; Style: (FontSize: 20, TextColor: #FFD700, RenderBold: true, HorizontalAlignment: Center); }
         }
         
         Label {
@@ -279,7 +279,7 @@ Group #BankRoot {
           FlexWeight: 1;
           
           Label #DepositToLabel { Text: "TO BANK"; Style: (FontSize: 10, TextColor: #888888, HorizontalAlignment: Center); }
-          Label #DepositToValue { Text: "$0"; Style: (FontSize: 20, TextColor: #32CD32, RenderBold: true, HorizontalAlignment: Center); }
+          Label #DepositToValue { Text: "--"; Style: (FontSize: 20, TextColor: #32CD32, RenderBold: true, HorizontalAlignment: Center); }
         }
       }
       
@@ -326,7 +326,7 @@ Group #BankRoot {
         Visible: false;
         
         Label #DepositPreviewText {
-          Text: "After deposit: Bank $X (+$Y)";
+          Text: "After deposit: Bank … (+…)";
           Style: (FontSize: 12, TextColor: #32CD32, HorizontalAlignment: Center);
         }
       }
@@ -390,7 +390,7 @@ Group #BankRoot {
           FlexWeight: 1;
           
           Label #WithdrawFromLabel { Text: "FROM BANK"; Style: (FontSize: 10, TextColor: #888888, HorizontalAlignment: Center); }
-          Label #WithdrawFromValue { Text: "$0"; Style: (FontSize: 20, TextColor: #32CD32, RenderBold: true, HorizontalAlignment: Center); }
+          Label #WithdrawFromValue { Text: "--"; Style: (FontSize: 20, TextColor: #32CD32, RenderBold: true, HorizontalAlignment: Center); }
         }
         
         Label {
@@ -404,7 +404,7 @@ Group #BankRoot {
           FlexWeight: 1;
           
           Label #WithdrawToLabel { Text: "TO POCKET"; Style: (FontSize: 10, TextColor: #888888, HorizontalAlignment: Center); }
-          Label #WithdrawToValue { Text: "$0"; Style: (FontSize: 20, TextColor: #FFD700, RenderBold: true, HorizontalAlignment: Center); }
+          Label #WithdrawToValue { Text: "--"; Style: (FontSize: 20, TextColor: #FFD700, RenderBold: true, HorizontalAlignment: Center); }
         }
       }
       
@@ -449,7 +449,7 @@ Group #BankRoot {
         Visible: false;
         
         Label #WithdrawPreviewText {
-          Text: "After withdraw: Pocket $X (+$Y)";
+          Text: "After withdraw: Pocket … (+…)";
           Style: (FontSize: 12, TextColor: #5599FF, HorizontalAlignment: Center);
         }
       }

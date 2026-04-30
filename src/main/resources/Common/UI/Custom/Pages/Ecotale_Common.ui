@@ -81,5 +81,36 @@
   Disabled: (Background: (Color: #333333), LabelStyle: @EcoButtonLabelStyle)
 );
 
+
+// Compact admin / tight rows (players tab actions)
+@EcoButtonLabelSmallStyle = LabelStyle(
+  FontSize: 9,
+  TextColor: @EcoTextWhite,
+  RenderBold: true,
+  RenderUppercase: true,
+  HorizontalAlignment: Center,
+  VerticalAlignment: Center
+);
+
+@EcoButtonSmallStyle = TextButtonStyle(
+  Default: (Background: (Color: #2b3f66), LabelStyle: @EcoButtonLabelSmallStyle),
+  Hovered: (Background: (Color: #35507f), LabelStyle: @EcoButtonLabelSmallStyle),
+  Pressed: (Background: (Color: #233553), LabelStyle: @EcoButtonLabelSmallStyle),
+  Disabled: (Background: (Color: #333333), LabelStyle: @EcoButtonLabelSmallStyle)
+);
+
+@EcoButtonGreenSmallStyle = TextButtonStyle(
+  Default: (Background: (Color: #1f6b3a), LabelStyle: @EcoButtonLabelSmallStyle),
+  Hovered: (Background: (Color: #278348), LabelStyle: @EcoButtonLabelSmallStyle),
+  Pressed: (Background: (Color: #19592f), LabelStyle: @EcoButtonLabelSmallStyle),
+  Disabled: (Background: (Color: #333333), LabelStyle: @EcoButtonLabelSmallStyle)
+);
+
+@EcoButtonRedSmallStyle = TextButtonStyle(
+  Default: (Background: (Color: #7a2b2b), LabelStyle: @EcoButtonLabelSmallStyle),
+  Hovered: (Background: (Color: #933737), LabelStyle: @EcoButtonLabelSmallStyle),
+  Pressed: (Background: (Color: #662424), LabelStyle: @EcoButtonLabelSmallStyle),
+  Disabled: (Background: (Color: #333333), LabelStyle: @EcoButtonLabelSmallStyle)
+);
 // === Card/Container Styles ===
 @EcoCardBackground = (Color: @EcoBgCard);

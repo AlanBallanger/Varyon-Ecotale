@@ -102,7 +102,7 @@ Group #AdminRoot {
           }
           Label #TotalCirculating {
             Text: "$0.00";
-            Style: (FontSize: 20, TextColor: #32CD32, RenderBold: true);
+            Style: (FontSize: 14, TextColor: #32CD32, RenderBold: true);
           }
         }
         
@@ -141,7 +141,7 @@ Group #AdminRoot {
           }
           Label #AverageBalance {
             Text: "$0.00";
-            Style: (FontSize: 20, TextColor: #5599FF, RenderBold: true);
+            Style: (FontSize: 14, TextColor: #5599FF, RenderBold: true);
           }
         }
       }
@@ -331,26 +331,26 @@ Group #AdminRoot {
         // Action Buttons
         TextButton #GiveButton {
           Text: "GIVE";
-          Style: $E.@EcoButtonGreenStyle;
-          Anchor: (Width: 54, Height: 28, Right: 6, Vertical: 0);
+          Style: $E.@EcoButtonGreenSmallStyle;
+          Anchor: (Width: 52, Height: 22, Right: 6, Vertical: 0);
         }
         
         TextButton #TakeButton {
           Text: "TAKE";
-          Style: $E.@EcoButtonRedStyle;
-          Anchor: (Width: 54, Height: 28, Right: 6, Vertical: 0);
+          Style: $E.@EcoButtonRedSmallStyle;
+          Anchor: (Width: 52, Height: 22, Right: 6, Vertical: 0);
         }
         
         TextButton #SetButton {
           Text: "SET";
-          Style: $E.@EcoButtonStyle;
-          Anchor: (Width: 48, Height: 28, Right: 6, Vertical: 0);
+          Style: $E.@EcoButtonSmallStyle;
+          Anchor: (Width: 50, Height: 22, Right: 6, Vertical: 0);
         }
         
         TextButton #ResetButton {
           Text: "RESET";
-          Style: $E.@EcoButtonStyle;
-          Anchor: (Width: 54, Height: 28, Vertical: 0);
+          Style: $E.@EcoButtonSmallStyle;
+          Anchor: (Width: 52, Height: 22, Vertical: 0);
         }
       }
     }

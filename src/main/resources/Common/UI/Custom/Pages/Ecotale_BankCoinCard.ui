@@ -29,7 +29,7 @@ Group #CoinCardBtn {
   }
   
   Label #CoinValue {
-    Text: "$0";
+    Text: "--";
     Style: (FontSize: 10, TextColor: #FFD700, HorizontalAlignment: Center);
   }
 }

@@ -43,6 +43,11 @@ public class EcoAdminGui extends InteractiveCustomUIPage<EcoAdminGui.AdminGuiDat
     
     private static final int PAGE_SIZE = 20;
     private static final int LOG_SIZE = 50;
+
+    private static final String ADMIN_TAB_BG = "#2b3f66";
+    private static final String ADMIN_TAB_BG_HOVER = "#35507f";
+    private static final String ADMIN_TAB_BG_PRESS = "#233553";
+    private static final String ADMIN_TAB_BG_DISABLED = "#333333";
     
     // Available languages (scalable - add new languages here)
     private static final List<String> AVAILABLE_LANGUAGES = List.of(
@@ -177,7 +182,8 @@ public class EcoAdminGui extends InteractiveCustomUIPage<EcoAdminGui.AdminGuiDat
         
         // Translate all UI elements based on server config language
         translateUI(cmd);
-        
+        applyAdminTabButtonStyles(cmd);
+
         // Show/hide tabs based on current selection
         updateTabVisibility(cmd);
     }
@@ -745,6 +751,26 @@ public class EcoAdminGui extends InteractiveCustomUIPage<EcoAdminGui.AdminGuiDat
         cmd.set("#LogContent.Visible", currentTab == Tab.LOG);
         cmd.set("#ConfigContent.Visible", currentTab == Tab.CONFIG);
     }
+
+    private void applyAdminTabButtonStyles(@NonNullDecl UICommandBuilder cmd) {
+        styleAdminTabButton(cmd, "#TabDashboard", currentTab == Tab.DASHBOARD);
+        styleAdminTabButton(cmd, "#TabPlayers", currentTab == Tab.PLAYERS);
+        styleAdminTabButton(cmd, "#TabTop", currentTab == Tab.TOP);
+        styleAdminTabButton(cmd, "#TabLog", currentTab == Tab.LOG);
+        styleAdminTabButton(cmd, "#TabConfig", currentTab == Tab.CONFIG);
+    }
+
+    private static void styleAdminTabButton(@NonNullDecl UICommandBuilder cmd, String selector, boolean selected) {
+        if (selected) {
+            cmd.set(selector + ".Style.Default.Background", ADMIN_TAB_BG_HOVER);
+            cmd.set(selector + ".Style.Hovered.Background", ADMIN_TAB_BG_HOVER);
+        } else {
+            cmd.set(selector + ".Style.Default.Background", ADMIN_TAB_BG);
+            cmd.set(selector + ".Style.Hovered.Background", ADMIN_TAB_BG_HOVER);
+        }
+        cmd.set(selector + ".Style.Pressed.Background", ADMIN_TAB_BG_PRESS);
+        cmd.set(selector + ".Style.Disabled.Background", ADMIN_TAB_BG_DISABLED);
+    }
     
     private void executeAction(String action, String uuidStr, String displayName, double amount, Ref<EntityStore> ref, Store<EntityStore> store) {
         UUID targetUuid = UUID.fromString(uuidStr);
@@ -842,7 +868,8 @@ public class EcoAdminGui extends InteractiveCustomUIPage<EcoAdminGui.AdminGuiDat
         
         // Re-translate UI elements (for language changes)
         translateUI(cmd);
-        
+        applyAdminTabButtonStyles(cmd);
+
         updateTabVisibility(cmd);
         
         // Update action panel bindings
