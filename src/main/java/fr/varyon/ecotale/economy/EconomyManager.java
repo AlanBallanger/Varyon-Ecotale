@@ -116,6 +116,14 @@ public class EconomyManager {
             }
         }
         storage.initialize().join();
+
+        var cfg = VaryonEcotalePlugin.getInstance().getEconomyConfig();
+
+        // Initialize rate limiter with values from config (same as original EcotaleAPI.init)
+        this.rateLimiter = new fr.varyon.ecotale.economy.util.RateLimiter(
+            cfg.getRateLimitBurst(),
+            cfg.getRateLimitRefill()
+        );
         
         // Lazy loading: players are loaded when they join instead of all at once
         // bulkPreload();
@@ -125,7 +133,7 @@ public class EconomyManager {
             Thread.ofVirtual().name("Ecotale-Economy-Maintenance-", 0).factory()
         );
         
-        long interval = VaryonEcotalePlugin.getInstance().getEconomyConfig().getAutoSaveInterval();
+        long interval = cfg.getAutoSaveInterval();
         this.saveExecutor.scheduleAtFixedRate(this::performMaintenance, 
             interval, interval, TimeUnit.SECONDS);
         
@@ -690,7 +698,7 @@ public class EconomyManager {
     
     // ========== Rate Limiter ==========
 
-    private final fr.varyon.ecotale.economy.util.RateLimiter rateLimiter = new fr.varyon.ecotale.economy.util.RateLimiter();
+    private final fr.varyon.ecotale.economy.util.RateLimiter rateLimiter;
 
     public boolean tryAcquireRateLimit(java.util.UUID uuid) { return rateLimiter.tryAcquire(uuid); }
     public void resetRateLimit(java.util.UUID uuid) { rateLimiter.resetBucket(uuid); }

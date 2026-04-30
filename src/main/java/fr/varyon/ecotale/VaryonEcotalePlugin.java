@@ -32,7 +32,7 @@ public class VaryonEcotalePlugin extends JavaPlugin {
 
     public VaryonEcotalePlugin(@NonNullDecl JavaPluginInit init) {
         super(init);
-        this.economyConfig = this.withConfig("Economy", EcotaleConfig.CODEC);
+        this.economyConfig = this.withConfig("Ecotale", EcotaleConfig.CODEC);
         this.modulesConfig = this.withConfig("Modules", ModulesConfig.CODEC);
         this.jobsConfig = this.withConfig("EcotaleJobs", EcotaleJobsConfig.CODEC);
         this.tierMappingsConfig = this.withConfig("TierMappings", TierMappingsConfig.CODEC);

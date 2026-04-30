@@ -32,14 +32,14 @@ Unified Hytale economy mod — merges **Ecotale** (core economy), **EcotaleCoins
 
 1. Drop `Varyon-Ecotale-*.jar` into your server's `mods/` folder.
 2. Start the server once — config files are generated in `mods/Varyon_Varyon-Ecotale/`.
-3. Edit `Economy.json`, `Modules.json`, `EcotaleJobs.json`, `TierMappings.json`, `CraftingMappings.json` as needed.
+3. Edit `Ecotale.json`, `Modules.json`, `EcotaleJobs.json`, `TierMappings.json`, `CraftingMappings.json` as needed.
 4. If Coins are enabled (`Modules.json`), restart once after first boot so coin assets are deployed.
 
 ## Configuration files
 
 | File | Description |
 |------|-------------|
-| `Economy.json` | Currency settings, storage backend, HUD, rate limits |
+| `Ecotale.json` | Currency settings, storage backend, HUD, rate limits (same format as original Ecotale) |
 | `Modules.json` | Toggle `EnableCoins` / `EnableJobs` |
 | `EcotaleJobs.json` | Mob/mining/crafting reward tiers, VIP multipliers |
 | `TierMappings.json` | NPC → tier mappings (auto-updated) |
