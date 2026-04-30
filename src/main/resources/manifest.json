@@ -7,7 +7,7 @@
     { "Name": "${plugin_author}" }
   ],
   "Website": "${plugin_website}",
-  "ServerVersion": "${server_version}",
+  "ServerVersion": "*",
   "Dependencies": {
     "Hytale:EntityModule": "*"
   },
