@@ -45,5 +45,8 @@
     "CustomModelScale": 0.3
   },
   "Scale": 1.0,
-  "ItemSoundSetId": "ISS_Items_Metal"
+  "ItemSoundSetId": "ISS_Items_Metal",
+  "Interactions": {
+    "Secondary": "VaryonEcotale_DepositCoin"
+  }
 }

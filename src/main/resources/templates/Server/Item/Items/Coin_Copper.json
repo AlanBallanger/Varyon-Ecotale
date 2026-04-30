@@ -1,17 +1,27 @@
 {
   "PlayerAnimationsId": "Item",
-  "Icon": "Icons/Items/Coins/Coin_Copper.png",
-  "MaxStack": 999,
-  "Categories": ["Currency", "Ecotale"],
+  "Icon": "Icons/ItemsGenerated/Coin_Copper.png",
+  "MaxStack": 1000,
+  "Categories": [
+    "Currency",
+    "Ecotale"
+  ],
   "DropOnDeath": true,
   "TranslationProperties": {
     "Name": "ecotalecoins.items.coin_copper.name",
     "Description": "ecotalecoins.items.coin_copper.description"
   },
   "IconProperties": {
-    "Scale": 1.5,
-    "Rotation": [0, 0, 0],
-    "Translation": [0, 0]
+    "Scale": 0.4,
+    "Rotation": [
+      0,
+      0,
+      0
+    ],
+    "Translation": [
+      0,
+      -32
+    ]
   },
   "Model": "Items/Currency/Coins/Coin_Held.blockymodel",
   "Texture": "Items/Currency/Coins/Coin_Copper.png",
@@ -35,5 +45,8 @@
     "CustomModelScale": 0.3
   },
   "Scale": 1.0,
-  "ItemSoundSetId": "ISS_Items_Metal"
+  "ItemSoundSetId": "ISS_Items_Metal",
+  "Interactions": {
+    "Secondary": "VaryonEcotale_DepositCoin"
+  }
 }

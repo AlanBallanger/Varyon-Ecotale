@@ -1,17 +1,27 @@
 {
   "PlayerAnimationsId": "Item",
-  "Icon": "Icons/Items/Coins/Coin_Mithril.png",
-  "MaxStack": 999,
-  "Categories": ["Currency", "Ecotale"],
+  "Icon": "Icons/ItemsGenerated/Coin_Mithril.png",
+  "MaxStack": 1000,
+  "Categories": [
+    "Currency",
+    "Ecotale"
+  ],
   "DropOnDeath": true,
   "TranslationProperties": {
     "Name": "ecotalecoins.items.coin_mithril.name",
     "Description": "ecotalecoins.items.coin_mithril.description"
   },
   "IconProperties": {
-    "Scale": 1.5,
-    "Rotation": [0, 0, 0],
-    "Translation": [0, 0]
+    "Scale": 0.4,
+    "Rotation": [
+      0,
+      0,
+      0
+    ],
+    "Translation": [
+      0,
+      -32
+    ]
   },
   "BlockType": {
     "BlockParticleSetId": "Stone",
@@ -33,5 +43,8 @@
     "CustomModelScale": 0.3
   },
   "Scale": 1.0,
-  "ItemSoundSetId": "ISS_Items_Metal"
+  "ItemSoundSetId": "ISS_Items_Metal",
+  "Interactions": {
+    "Secondary": "VaryonEcotale_DepositCoin"
+  }
 }
