@@ -3,6 +3,7 @@ package fr.varyon.ecotale.jobs.systems;
 import fr.varyon.ecotale.shared.EconomyBridge;
 import fr.varyon.ecotale.shared.CoinsBridge;
 import fr.varyon.ecotale.economy.util.RateLimiter;
+import fr.varyon.ecotale.jobs.integration.VaryonMobScalingBridge;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig.MobKillsConfig;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig.SecurityConfig;
 import fr.varyon.ecotale.jobs.config.TierConfig;
@@ -37,11 +38,16 @@ import java.util.concurrent.atomic.AtomicLong;
  * Mob reward system - uses DeathComponent to detect kills.
  */
 public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent> {
-    
+
+    private static final float VARYON_HP_CLAMP_MIN = 0.25f;
+    private static final float VARYON_HP_CLAMP_MAX = 40.0f;
+
     // Configuration - set via init()
     private MobKillsConfig config;
     private TierMappingsConfig mappingsConfig;
     
+    private final VaryonMobScalingBridge varyonMobScalingBridge = new VaryonMobScalingBridge();
+
     // Core subsystems
     private final TierMatcher tierMatcher = new TierMatcher();
     private final AntiFarmSystem antiFarm = new AntiFarmSystem();
@@ -104,11 +110,12 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
             true   // Enabled
         );
         
-        JobsLogger.info("[MobRewardSystem] Initialized: %d tiers, %d mappings, %d exclusions | AntiFarm=%s",
-            config.getTiers().size(), 
+        JobsLogger.info("[MobRewardSystem] Initialized: %d tiers, %d mappings, %d exclusions | AntiFarm=%s | VaryonMobHp=%s",
+            config.getTiers().size(),
             mappings.getTierMappings().size(),
             mappings.getExclusions().size(),
-            security.isAntiFarmEnabled() ? "ON" : "OFF");
+            security.isAntiFarmEnabled() ? "ON" : "OFF",
+            varyonMobScalingBridge.isReflectionReady() ? "ON" : "OFF");
     }
     
     // =========================================================================
@@ -311,8 +318,13 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         // VIP Multiplier (killer implements CommandSender which has hasPermission)
         float vipMultiplier = VaryonEcotalePlugin.getInstance().getJobsModule().getConfig().getVipMultipliers().calculateMultiplier(killer);
 
-        // Apply anti-farm penalty & VIP
-        float exactCoins = baseCoins * antiFarmMultiplier * vipMultiplier;
+        float varyonHpMult = 1.0f;
+        if (varyonMobScalingBridge.isReflectionReady()) {
+            float rawHp = varyonMobScalingBridge.readVictimHealthMultiplier(store, mobRef);
+            varyonHpMult = clampVaryonHpMultiplier(rawHp);
+        }
+
+        float exactCoins = baseCoins * antiFarmMultiplier * vipMultiplier * varyonHpMult;
         int finalCoins = (int) exactCoins;
         
         // Probabilistic rounding: 1.2 coins = 1 coin + 20% chance of extra coin
@@ -357,8 +369,8 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         totalRewardsGiven.incrementAndGet();
         totalValueInjected.addAndGet(totalValue);
         
-        JobsLogger.debug("SUCCESS: %s -> %d coins (exact=%.2f, antiFarm=%.0f%%, vip=%.2fx, mode=%s)", 
-            mobId, finalCoins, exactCoins, antiFarmMultiplier * 100, vipMultiplier,
+        JobsLogger.debug("SUCCESS: %s -> %d coins (exact=%.2f, antiFarm=%.0f%%, vip=%.2fx, varyonHp=%.3fx, mode=%s)",
+            mobId, finalCoins, exactCoins, antiFarmMultiplier * 100, vipMultiplier, varyonHpMult,
             CoinsBridge.isAvailable() ? "COINS" : "BALANCE");
     }
     
@@ -417,5 +429,12 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
     @Nullable
     public MobKillsConfig getConfig() {
         return config;
+    }
+
+    private static float clampVaryonHpMultiplier(float rawHp) {
+        if (!(rawHp > 0 && Float.isFinite(rawHp))) {
+            return 1.0f;
+        }
+        return Math.max(VARYON_HP_CLAMP_MIN, Math.min(VARYON_HP_CLAMP_MAX, rawHp));
     }
 }

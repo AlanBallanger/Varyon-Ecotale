@@ -13,7 +13,8 @@
   },
   "OptionalDependencies": {
     "TheNewEconomy:VaultUnlocked": "*",
-    "LuckPerms:LuckPerms": "*"
+    "LuckPerms:LuckPerms": "*",
+    "Varyon:Varyon": "*"
   },
   "DisabledByDefault": false,
   "IncludesAssetPack": true,

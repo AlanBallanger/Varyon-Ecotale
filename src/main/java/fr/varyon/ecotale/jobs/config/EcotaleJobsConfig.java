@@ -42,11 +42,11 @@ public class EcotaleJobsConfig {
     public CraftingConfig getCrafting() { return crafting; }
     public NotificationConfig getNotifications() { return notifications; }
     public VipConfig getVipMultipliers() { return vipMultipliers; }
-    
+
     // =========================================================================
     // MOB KILLS CONFIG
     // =========================================================================
-    
+
     public static class MobKillsConfig {
         public static final BuilderCodec<MobKillsConfig> CODEC = BuilderCodec.builder(MobKillsConfig.class, MobKillsConfig::new)
             .append(new KeyedCodec<>("Enabled", Codec.BOOLEAN),
@@ -56,15 +56,15 @@ public class EcotaleJobsConfig {
             .append(new KeyedCodec<>("Security", SecurityConfig.CODEC),
                 (c, v, e) -> c.security = v, (c, e) -> c.security).add()
             .build();
-        
-        private boolean enabled = true;  // Mob kills enabled by default
+
+        private boolean enabled = true;
         private Map<String, TierConfig> tiers = createDefaultTiers();
         private SecurityConfig security = new SecurityConfig();
-        
+
         public boolean isEnabled() { return enabled; }
         public Map<String, TierConfig> getTiers() { return tiers; }
         public SecurityConfig getSecurity() { return security; }
-        
+
         /**
          * Get a tier by name with fail-safe fallback.
          * @param defaultTier The default tier name from TierMappingsConfig
