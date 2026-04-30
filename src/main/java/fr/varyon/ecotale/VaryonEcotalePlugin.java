@@ -5,6 +5,9 @@ import fr.varyon.ecotale.economy.EconomyManager;
 import fr.varyon.ecotale.economy.EconomyModule;
 import fr.varyon.ecotale.economy.config.EcotaleConfig;
 import fr.varyon.ecotale.jobs.JobsModule;
+import fr.varyon.ecotale.jobs.config.CraftingMappingsConfig;
+import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig;
+import fr.varyon.ecotale.jobs.config.TierMappingsConfig;
 import fr.varyon.ecotale.shared.ModulesConfig;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
@@ -19,6 +22,9 @@ public class VaryonEcotalePlugin extends JavaPlugin {
 
     public Config<EcotaleConfig> economyConfig;
     private Config<ModulesConfig> modulesConfig;
+    private Config<EcotaleJobsConfig> jobsConfig;
+    private Config<TierMappingsConfig> tierMappingsConfig;
+    private Config<CraftingMappingsConfig> craftingMappingsConfig;
 
     private EconomyModule economyModule;
     private CoinsModule coinsModule;
@@ -28,6 +34,9 @@ public class VaryonEcotalePlugin extends JavaPlugin {
         super(init);
         this.economyConfig = this.withConfig("Economy", EcotaleConfig.CODEC);
         this.modulesConfig = this.withConfig("Modules", ModulesConfig.CODEC);
+        this.jobsConfig = this.withConfig("EcotaleJobs", EcotaleJobsConfig.CODEC);
+        this.tierMappingsConfig = this.withConfig("TierMappings", TierMappingsConfig.CODEC);
+        this.craftingMappingsConfig = this.withConfig("CraftingMappings", CraftingMappingsConfig.CODEC);
     }
 
     @Override
@@ -50,7 +59,7 @@ public class VaryonEcotalePlugin extends JavaPlugin {
         }
 
         if (modules.isEnableJobs()) {
-            this.jobsModule = new JobsModule(this);
+            this.jobsModule = new JobsModule(jobsConfig, tierMappingsConfig, craftingMappingsConfig);
             jobsModule.setup(this);
         } else {
             getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs module disabled via Modules.json.");
@@ -65,10 +74,6 @@ public class VaryonEcotalePlugin extends JavaPlugin {
         if (coinsModule != null) coinsModule.shutdown();
         if (economyModule != null) economyModule.shutdown();
         getLogger().at(Level.INFO).log("[Varyon-Ecotale] Plugin shutdown complete.");
-    }
-
-    public <T> Config<T> createConfig(String name, com.hypixel.hytale.codec.builder.BuilderCodec<T> codec) {
-        return this.withConfig(name, codec);
     }
 
     public static VaryonEcotalePlugin getInstance() { return instance; }

@@ -1,6 +1,5 @@
 package fr.varyon.ecotale.jobs;
 
-import fr.varyon.ecotale.VaryonEcotalePlugin;
 import fr.varyon.ecotale.jobs.commands.TestOresCommand;
 import fr.varyon.ecotale.jobs.config.CraftingMappingsConfig;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig;
@@ -34,10 +33,12 @@ public class JobsModule implements ModuleInitializer {
 
     private JavaPlugin plugin;
 
-    public JobsModule(VaryonEcotalePlugin owner) {
-        this.configHolder = owner.createConfig("EcotaleJobs", EcotaleJobsConfig.CODEC);
-        this.tierMappingsConfig = owner.createConfig("TierMappings", TierMappingsConfig.CODEC);
-        this.craftingMappingsConfig = owner.createConfig("CraftingMappings", CraftingMappingsConfig.CODEC);
+    public JobsModule(Config<EcotaleJobsConfig> configHolder,
+                      Config<TierMappingsConfig> tierMappingsConfig,
+                      Config<CraftingMappingsConfig> craftingMappingsConfig) {
+        this.configHolder = configHolder;
+        this.tierMappingsConfig = tierMappingsConfig;
+        this.craftingMappingsConfig = craftingMappingsConfig;
     }
 
     @Override
