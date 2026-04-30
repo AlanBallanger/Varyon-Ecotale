@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Configuration for Ecotale economy plugin.
  * 
- * All settings are saved to Ecotale.json in the universe folder.
+ * All settings are saved to config.json in the universe folder.
  * 
  * NOTE: BuilderCodec keys MUST start with uppercase (PascalCase)
  */

@@ -22,11 +22,11 @@ public class CoinsModule implements ModuleInitializer {
     public void setup(JavaPlugin plugin) {
         this.plugin = plugin;
 
-        Path configPath = plugin.getDataDirectory().resolve("Coins.json");
+        Path configPath = plugin.getDataDirectory().resolve("Physical_Currency.json");
         this.coinConfig = new CoinConfig(configPath, plugin.getLogger());
 
         if (!coinConfig.load()) {
-            plugin.getLogger().at(Level.SEVERE).log("[Varyon-Ecotale] Failed to load Coins.json, disabling coins module.");
+            plugin.getLogger().at(Level.SEVERE).log("[Varyon-Ecotale] Failed to load Physical_Currency.json, disabling coins module.");
             return;
         }
 

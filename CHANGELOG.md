@@ -12,8 +12,8 @@
 - All packages migrated from `com.ecotale.*` / `com.ecotalecoins.*` / `com.ecotalejobs.*` to `fr.varyon.ecotale.*`
 
 ### Changed
-- Storage configs split: `Economy.json` (economy settings) + `Modules.json` (module toggles)
-- Coin config remains `Coins.json` (Gson-based, loaded by `CoinsModule`)
+- Storage configs split: `config.json` (economy settings) + `Modules.json` (module toggles)
+- Coin config: `Physical_Currency.json` (Gson-based, loaded by `CoinsModule`)
 - Jobs configs: `EcotaleJobs.json`, `TierMappings.json`, `CraftingMappings.json`
 - Asset pack folder: `mods/Varyon_Varyon-Ecotale/` (group=Varyon, name=Varyon-Ecotale)
 

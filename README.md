@@ -32,19 +32,19 @@ Unified Hytale economy mod — merges **Ecotale** (core economy), **EcotaleCoins
 
 1. Drop `Varyon-Ecotale-*.jar` into your server's `mods/` folder.
 2. Start the server once — config files are generated in `mods/Varyon_Varyon-Ecotale/`.
-3. Edit `Ecotale.json`, `Modules.json`, `EcotaleJobs.json`, `TierMappings.json`, `CraftingMappings.json` as needed.
+3. Edit `config.json`, `Modules.json`, `EcotaleJobs.json`, `TierMappings.json`, `CraftingMappings.json` as needed.
 4. If Coins are enabled (`Modules.json`), restart once after first boot so coin assets are deployed.
 
 ## Configuration files
 
 | File | Description |
 |------|-------------|
-| `Ecotale.json` | Currency settings, storage backend, HUD, rate limits (same format as original Ecotale) |
+| `config.json` | Currency settings, storage backend, HUD, rate limits |
 | `Modules.json` | Toggle `EnableCoins` / `EnableJobs` |
 | `EcotaleJobs.json` | Mob/mining/crafting reward tiers, VIP multipliers |
 | `TierMappings.json` | NPC → tier mappings (auto-updated) |
 | `CraftingMappings.json` | Recipe → tier mappings (auto-updated) |
-| `Coins.json` | Coin denominations and values |
+| `Physical_Currency.json` | Coin denominations and values |
 
 ## Build
 
@@ -76,4 +76,4 @@ fr.varyon.ecotale
 
 ## Migration from standalone mods
 
-Remove `Ecotale`, `EcotaleCoins` and `EcotaleJobs` jars from your mods folder before adding `Varyon-Ecotale`. Data migration is not required for a fresh install. Existing player balances stored in H2 or MySQL can be reused by pointing the new `Economy.json` at the same database.
+Remove `Ecotale`, `EcotaleCoins` and `EcotaleJobs` jars from your mods folder before adding `Varyon-Ecotale`. Data migration is not required for a fresh install. Existing player balances stored in H2 or MySQL can be reused by pointing the new `config.json` at the same database.
