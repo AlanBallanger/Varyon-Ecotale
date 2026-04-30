@@ -221,7 +221,7 @@ public class H2StorageProvider implements StorageProvider {
                         try (PreparedStatement insertPs = connection.prepareStatement(insertSql)) {
                             insertPs.setString(1, playerUuid.toString());
                             insertPs.setString(2, playerName);
-                            insertPs.setDouble(3, fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().getStartingBalance());
+                            insertPs.setDouble(3, fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().getStartingBalance());
                             insertPs.executeUpdate();
                         }
                     }

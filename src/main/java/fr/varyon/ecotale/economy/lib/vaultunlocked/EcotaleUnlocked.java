@@ -1,6 +1,7 @@
 package fr.varyon.ecotale.economy.lib.vaultunlocked;
 
 import fr.varyon.ecotale.VaryonEcotalePlugin;
+import fr.varyon.ecotale.shared.EconomyBridge;
 import net.milkbowl.vault2.economy.AccountPermission;
 import net.milkbowl.vault2.economy.Economy;
 import net.milkbowl.vault2.economy.EconomyResponse;

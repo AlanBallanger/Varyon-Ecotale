@@ -1,6 +1,6 @@
 package fr.varyon.ecotale.jobs.util;
 
-import com.ecotale.systems.BalanceHudSystem;
+import fr.varyon.ecotale.economy.systems.BalanceHudSystem;
 
 import javax.annotation.Nonnull;
 import java.util.UUID;

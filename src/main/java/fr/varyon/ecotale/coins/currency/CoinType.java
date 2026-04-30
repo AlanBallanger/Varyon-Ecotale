@@ -134,13 +134,12 @@ public enum CoinType {
      * Get configuration for this coin type from the config manager.
      */
     private CoinConfig.CoinTypeConfig getConfig() {
-        Main plugin = VaryonEcotalePlugin.getInstance();
-        if (plugin == null) {
-            // Fallback during initialization
+        VaryonEcotalePlugin plugin = VaryonEcotalePlugin.getInstance();
+        if (plugin == null || plugin.getCoinsModule() == null) {
             return null;
         }
         
-        CoinConfig config = plugin.getCoinConfig();
+        CoinConfig config = plugin.getCoinsModule().getCoinConfig();
         if (config == null) {
             return null;
         }

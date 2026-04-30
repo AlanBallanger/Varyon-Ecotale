@@ -2,7 +2,7 @@ package fr.varyon.ecotale.jobs.systems;
 
 import fr.varyon.ecotale.shared.EconomyBridge;
 import fr.varyon.ecotale.shared.CoinsBridge;
-import com.ecotale.util.RateLimiter;
+import fr.varyon.ecotale.economy.util.RateLimiter;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig.MobKillsConfig;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig.SecurityConfig;
 import fr.varyon.ecotale.jobs.config.TierConfig;
@@ -270,7 +270,7 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         // VIP players get bonus chance added to base drop chance
         // ─────────────────────────────────────────────────────────────
         int baseDropChance = tier.getDropChance();
-        int vipChanceBonus = VaryonEcotalePlugin.getInstance().getEconomyConfig().getVipMultipliers().calculateChanceBonus(killer);
+        int vipChanceBonus = VaryonEcotalePlugin.getInstance().getJobsModule().getConfig().getVipMultipliers().calculateChanceBonus(killer);
         int effectiveDropChance = Math.min(baseDropChance + vipChanceBonus, 100);
         
         if (effectiveDropChance < 100) {
@@ -309,7 +309,7 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         }
         
         // VIP Multiplier (killer implements CommandSender which has hasPermission)
-        float vipMultiplier = VaryonEcotalePlugin.getInstance().getEconomyConfig().getVipMultipliers().calculateMultiplier(killer);
+        float vipMultiplier = VaryonEcotalePlugin.getInstance().getJobsModule().getConfig().getVipMultipliers().calculateMultiplier(killer);
 
         // Apply anti-farm penalty & VIP
         float exactCoins = baseCoins * antiFarmMultiplier * vipMultiplier;
@@ -344,10 +344,10 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         // SUCCESS: GIVE REWARD
         // Uses physical coins if addon is available, otherwise direct balance
         // ─────────────────────────────────────────────────────────────
-        if (EconomyBridge.isPhysicalCoinsAvailable()) {
+        if (CoinsBridge.isAvailable()) {
             // Physical coins addon installed - drop coins in world
-            PhysicalCoinsProvider coins = EconomyBridge.getPhysicalCoins();
-            coins.dropCoinsAtEntity(mobRef, store, commandBuffer, totalValue);
+            
+            CoinsBridge.dropCoinsAtEntity(mobRef, store, commandBuffer, totalValue);
         } else {
             // No coins addon - deposit directly to player's balance
             EconomyBridge.deposit(playerUuid, (double) totalValue, "Mob kill: " + mobId);
@@ -359,7 +359,7 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         
         JobsLogger.debug("SUCCESS: %s -> %d coins (exact=%.2f, antiFarm=%.0f%%, vip=%.2fx, mode=%s)", 
             mobId, finalCoins, exactCoins, antiFarmMultiplier * 100, vipMultiplier,
-            EconomyBridge.isPhysicalCoinsAvailable() ? "COINS" : "BALANCE");
+            CoinsBridge.isAvailable() ? "COINS" : "BALANCE");
     }
     
     // =========================================================================

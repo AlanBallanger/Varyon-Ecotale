@@ -19,7 +19,8 @@ public final class JobsLogger {
      */
     public static boolean isDebugEnabled() {
         try {
-            return Main.CONFIG != null && VaryonEcotalePlugin.getInstance().getEconomyConfig().isDebugMode();
+            VaryonEcotalePlugin p = VaryonEcotalePlugin.getInstance();
+            return p != null && p.getJobsModule() != null && p.getJobsModule().getConfig().isDebugMode();
         } catch (Exception e) {
             return false; // Default to no debug in production
         }

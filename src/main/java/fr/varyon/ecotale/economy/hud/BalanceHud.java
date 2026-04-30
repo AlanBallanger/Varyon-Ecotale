@@ -47,7 +47,7 @@ public class BalanceHud extends SimpleHud {
     @Override
     protected void build(com.hypixel.hytale.server.core.ui.builder.UICommandBuilder builder) {
         // Check config instead of hardcoded boolean
-        if (!fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().isEnableHudDisplay()) {
+        if (!fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().isEnableHudDisplay()) {
             return;
         }
         super.build(builder);
@@ -59,7 +59,7 @@ public class BalanceHud extends SimpleHud {
         }
         
         // If animation is disabled, update instantly (safer for MultipleHUD compatibility)
-        if (!fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().isEnableHudAnimation()) {
+        if (!fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().isEnableHudAnimation()) {
             targetBalance = newBalance;
             displayedBalance = newBalance;
             updateDisplayFinal(newBalance);
@@ -139,11 +139,11 @@ public class BalanceHud extends SimpleHud {
      * Example: 1,100,000,005 shows as "...005"
      */
     private void updateDisplayTrailing(double balance) {
-        if (!fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().isEnableHudDisplay()) {
+        if (!fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().isEnableHudDisplay()) {
             notifyDisabledOnce();
             return;
         }
-        String symbol = fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().getCurrencySymbol();
+        String symbol = fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().getCurrencySymbol();
         long rounded = Math.round(balance);
         // Show last 5 digits
         long lastDigits = rounded % 100_000;
@@ -151,7 +151,7 @@ public class BalanceHud extends SimpleHud {
         
         // Use per-player translation if available, otherwise config value
         String hudPrefix = fr.varyon.ecotale.economy.util.TranslationHelper.t(ownerRef, "hud.prefix", 
-            fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().getHudPrefix());
+            fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().getHudPrefix());
         
         this.setText("CurrencyName", hudPrefix);
         this.setText("BalanceSymbol", symbol);
@@ -163,15 +163,15 @@ public class BalanceHud extends SimpleHud {
      * Show final abbreviated format (K/M/B).
      */
     private void updateDisplayFinal(double balance) {
-        if (!fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().isEnableHudDisplay()) {
+        if (!fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().isEnableHudDisplay()) {
             notifyDisabledOnce();
             return;
         }
-        String formatted = fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().formatShort(balance);
-        String symbol = fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().getCurrencySymbol();
+        String formatted = fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().formatShort(balance);
+        String symbol = fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().getCurrencySymbol();
         // Use per-player translation if available, otherwise config value
         String hudPrefix = fr.varyon.ecotale.economy.util.TranslationHelper.t(ownerRef, "hud.prefix", 
-            fr.varyon.ecotale.VaryonEcotalePlugin.CONFIG.get().getHudPrefix());
+            fr.varyon.ecotale.VaryonEcotalePlugin.getInstance().getEconomyConfig().getHudPrefix());
         String amount = formatted.startsWith(symbol) 
             ? formatted.substring(symbol.length()) 
             : formatted;

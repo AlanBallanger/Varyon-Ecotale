@@ -77,7 +77,7 @@ public class VeinStreakTracker {
     
     private VeinStreakConfig getConfig() {
         try {
-            return VaryonEcotalePlugin.getInstance().getEconomyConfig().getMining().getVeinStreak();
+            return VaryonEcotalePlugin.getInstance().getJobsModule().getConfig().getMining().getVeinStreak();
         } catch (Exception e) {
             return null;
         }

@@ -2,7 +2,7 @@ package fr.varyon.ecotale.jobs.systems;
 
 import fr.varyon.ecotale.shared.EconomyBridge;
 import fr.varyon.ecotale.shared.CoinsBridge;
-import com.ecotale.util.RateLimiter;
+import fr.varyon.ecotale.economy.util.RateLimiter;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig.MiningConfig;
 import fr.varyon.ecotale.VaryonEcotalePlugin;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig.ToolQualityConfig;
@@ -216,7 +216,7 @@ public class MiningRewardSystem extends EntityEventSystem<EntityStore, BreakBloc
         
         int baseDropChance = tier.getDropChance();
         int vipChanceBonus = (player != null) 
-            ? VaryonEcotalePlugin.getInstance().getEconomyConfig().getVipMultipliers().calculateChanceBonus(player) 
+            ? VaryonEcotalePlugin.getInstance().getJobsModule().getConfig().getVipMultipliers().calculateChanceBonus(player) 
             : 0;
         int effectiveDropChance = Math.min(baseDropChance + vipChanceBonus, 100);
         
@@ -266,7 +266,7 @@ public class MiningRewardSystem extends EntityEventSystem<EntityStore, BreakBloc
         
         // VIP Multiplier (player implements CommandSender which has hasPermission)
         float vipMultiplier = (player != null) 
-            ? VaryonEcotalePlugin.getInstance().getEconomyConfig().getVipMultipliers().calculateMultiplier(player) 
+            ? VaryonEcotalePlugin.getInstance().getJobsModule().getConfig().getVipMultipliers().calculateMultiplier(player) 
             : 1.0f;
 
         // Apply all multipliers
@@ -304,9 +304,9 @@ public class MiningRewardSystem extends EntityEventSystem<EntityStore, BreakBloc
             targetBlock.getZ() + 0.5
         );
         
-        if (EconomyBridge.isPhysicalCoinsAvailable()) {
-            PhysicalCoinsProvider coins = EconomyBridge.getPhysicalCoins();
-            coins.dropCoins(store, commandBuffer, dropPosition, totalValue);
+        if (CoinsBridge.isAvailable()) {
+            
+            CoinsBridge.dropCoins(store, commandBuffer, dropPosition, totalValue);
         } else {
             EconomyBridge.deposit(playerUuid, (double) totalValue, "Mining: " + blockId);
         }
@@ -346,9 +346,9 @@ public class MiningRewardSystem extends EntityEventSystem<EntityStore, BreakBloc
                         int bonusAmount = streakConfig.getBonusCoinAmount();
                         long bonusValue = (long) bonusAmount; // Copper value = 1
                         if (economyCap.tryInject(bonusValue)) {
-                            if (EconomyBridge.isPhysicalCoinsAvailable()) {
-                                PhysicalCoinsProvider coins = EconomyBridge.getPhysicalCoins();
-                                coins.dropCoins(store, commandBuffer, dropPosition, bonusValue);
+                            if (CoinsBridge.isAvailable()) {
+                                
+                                CoinsBridge.dropCoins(store, commandBuffer, dropPosition, bonusValue);
                             } else {
                                 EconomyBridge.deposit(playerUuid, (double) bonusValue, "VeinStreak bonus");
                             }

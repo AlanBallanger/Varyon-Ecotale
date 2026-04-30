@@ -1,7 +1,7 @@
 package fr.varyon.ecotale.jobs.systems;
 
 import fr.varyon.ecotale.shared.EconomyBridge;
-import com.ecotale.util.RateLimiter;
+import fr.varyon.ecotale.economy.util.RateLimiter;
 import fr.varyon.ecotale.jobs.config.CraftingMappingsConfig;
 import fr.varyon.ecotale.jobs.config.TierConfig;
 import fr.varyon.ecotale.jobs.security.AntiFarmSystem;

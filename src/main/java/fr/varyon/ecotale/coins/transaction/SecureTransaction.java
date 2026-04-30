@@ -499,7 +499,7 @@ public class SecureTransaction {
             transactionLog.put(txHash, updated);
             
             // Debug log for transactions
-            com.ecotale.util.EcoLogger.debug("TX " + txHash + " -> " + status + 
+            fr.varyon.ecotale.economy.util.EcoLogger.debug("TX " + txHash + " -> " + status + 
                 (errorMessage != null ? " (" + errorMessage + ")" : ""));
         }
     }
@@ -531,10 +531,10 @@ public class SecureTransaction {
         for (TransactionRecord record : transactionLog.values()) {
             if ("PENDING".equals(record.status)) {
                 // This is a warning - always log
-                com.ecotale.util.EcoLogger.warn("Found pending transaction " + record.txHash);
-                com.ecotale.util.EcoLogger.warn("  Player: " + record.playerUuid);
-                com.ecotale.util.EcoLogger.warn("  Escrow value: " + record.escrowValue);
-                com.ecotale.util.EcoLogger.warn("  Transaction should have been rolled back to bank.");
+                fr.varyon.ecotale.economy.util.EcoLogger.warn("Found pending transaction " + record.txHash);
+                fr.varyon.ecotale.economy.util.EcoLogger.warn("  Player: " + record.playerUuid);
+                fr.varyon.ecotale.economy.util.EcoLogger.warn("  Escrow value: " + record.escrowValue);
+                fr.varyon.ecotale.economy.util.EcoLogger.warn("  Transaction should have been rolled back to bank.");
                 
                 // Mark as recovered - the money is in the bank escrow
                 updateTransactionStatus(record.txHash, "RECOVERED_TO_BANK", 
