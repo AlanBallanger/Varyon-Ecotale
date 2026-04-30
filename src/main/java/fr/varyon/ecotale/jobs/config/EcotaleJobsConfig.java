@@ -10,7 +10,7 @@ import com.hypixel.hytale.server.core.command.system.CommandSender;
 import java.util.*;
 
 /**
- * Main configuration class for EcotaleJobs plugin.
+ * Main configuration class for the jobs / earnings module (loaded from earnings_config.yml).
  */
 public class EcotaleJobsConfig {
     

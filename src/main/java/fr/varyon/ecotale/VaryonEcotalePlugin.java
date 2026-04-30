@@ -6,14 +6,15 @@ import fr.varyon.ecotale.economy.EconomyModule;
 import fr.varyon.ecotale.economy.config.EcotaleConfig;
 import fr.varyon.ecotale.jobs.JobsModule;
 import fr.varyon.ecotale.jobs.config.CraftingMappingsConfig;
+import fr.varyon.ecotale.jobs.config.EarningsConfigLoader;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig;
 import fr.varyon.ecotale.jobs.config.TierMappingsConfig;
-import fr.varyon.ecotale.shared.ModulesConfig;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.util.Config;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
+import java.nio.file.Path;
 import java.util.logging.Level;
 
 public class VaryonEcotalePlugin extends JavaPlugin {
@@ -21,8 +22,6 @@ public class VaryonEcotalePlugin extends JavaPlugin {
     private static VaryonEcotalePlugin instance;
 
     public Config<EcotaleConfig> economyConfig;
-    private Config<ModulesConfig> modulesConfig;
-    private Config<EcotaleJobsConfig> jobsConfig;
     private Config<TierMappingsConfig> tierMappingsConfig;
     private Config<CraftingMappingsConfig> craftingMappingsConfig;
 
@@ -33,8 +32,6 @@ public class VaryonEcotalePlugin extends JavaPlugin {
     public VaryonEcotalePlugin(@NonNullDecl JavaPluginInit init) {
         super(init);
         this.economyConfig = this.withConfig("config", EcotaleConfig.CODEC);
-        this.modulesConfig = this.withConfig("Modules", ModulesConfig.CODEC);
-        this.jobsConfig = this.withConfig("EcotaleJobs", EcotaleJobsConfig.CODEC);
         this.tierMappingsConfig = this.withConfig("TierMappings", TierMappingsConfig.CODEC);
         this.craftingMappingsConfig = this.withConfig("CraftingMappings", CraftingMappingsConfig.CODEC);
     }
@@ -45,24 +42,26 @@ public class VaryonEcotalePlugin extends JavaPlugin {
         instance = this;
 
         economyConfig.save();
-        modulesConfig.save();
-        ModulesConfig modules = modulesConfig.get();
+
+        EcotaleConfig cfg = economyConfig.get();
 
         this.economyModule = new EconomyModule(economyConfig);
         economyModule.setup(this);
 
-        if (modules.isEnableCoins()) {
+        if (cfg.isEnableCoins()) {
             this.coinsModule = new CoinsModule();
             coinsModule.setup(this);
         } else {
-            getLogger().at(Level.INFO).log("[Varyon-Ecotale] Coins module disabled via Modules.json.");
+            getLogger().at(Level.INFO).log("[Varyon-Ecotale] Coins module disabled (config.json).");
         }
 
-        if (modules.isEnableJobs()) {
-            this.jobsModule = new JobsModule(jobsConfig, tierMappingsConfig, craftingMappingsConfig);
+        if (cfg.isEnableJobs()) {
+            Path earningsPath = getDataDirectory().resolve("earnings_config.yml");
+            EcotaleJobsConfig earnings = EarningsConfigLoader.load(earningsPath, getLogger());
+            this.jobsModule = new JobsModule(earnings, tierMappingsConfig, craftingMappingsConfig);
             jobsModule.setup(this);
         } else {
-            getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs module disabled via Modules.json.");
+            getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs module disabled (config.json).");
         }
 
         getLogger().at(Level.INFO).log("[Varyon-Ecotale] Plugin fully loaded.");

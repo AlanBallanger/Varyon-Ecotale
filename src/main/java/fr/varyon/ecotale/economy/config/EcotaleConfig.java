@@ -25,6 +25,11 @@ public class EcotaleConfig {
         .append(new KeyedCodec<>("HudPrefix", Codec.STRING),
             (c, v, e) -> c.hudPrefix = v, (c, e) -> c.hudPrefix).add()
         
+        .append(new KeyedCodec<>("EnableCoins", Codec.BOOLEAN),
+            (c, v, e) -> c.enableCoins = v, (c, e) -> c.enableCoins).add()
+        .append(new KeyedCodec<>("EnableJobs", Codec.BOOLEAN),
+            (c, v, e) -> c.enableJobs = v, (c, e) -> c.enableJobs).add()
+
         // Balance settings
         .append(new KeyedCodec<>("StartingBalance", Codec.DOUBLE),
             (c, v, e) -> c.startingBalance = v, (c, e) -> c.startingBalance).add()
@@ -95,6 +100,9 @@ public class EcotaleConfig {
     // Currency
     private String currencySymbol = "$";
     private String hudPrefix = "Bank";
+
+    private boolean enableCoins = true;
+    private boolean enableJobs = true;
     
     // Balance limits
     private double startingBalance = 100.0;
@@ -213,7 +221,13 @@ public class EcotaleConfig {
      * @param prefix Prefix to display in HUD (e.g., "Bank", "Wealth")
      */
     public void setHudPrefix(String prefix) { this.hudPrefix = prefix; }
-    
+
+    public boolean isEnableCoins() { return enableCoins; }
+    public boolean isEnableJobs() { return enableJobs; }
+
+    public void setEnableCoins(boolean enableCoins) { this.enableCoins = enableCoins; }
+    public void setEnableJobs(boolean enableJobs) { this.enableJobs = enableJobs; }
+
     // ========== Balance Getters/Setters ==========
     
     /**

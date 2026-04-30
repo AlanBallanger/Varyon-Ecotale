@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Debug command to generate a wall with ALL ores organized by family.
  * Usage: /jobstest
- * Requires DebugMode=true in EcotaleJobs.json
+ * DebugMode=true in earnings_config.yml
  */
 public class TestOresCommand extends AbstractAsyncCommand {
     
@@ -67,7 +67,7 @@ public class TestOresCommand extends AbstractAsyncCommand {
         
         // Check debug mode
         if (!VaryonEcotalePlugin.getInstance().getEconomyConfig().isDebugMode()) {
-            player.sendMessage(Message.raw("Debug mode is disabled in EcotaleJobs config.").color(Color.RED));
+            player.sendMessage(Message.raw("Debug mode is disabled in earnings_config.yml.").color(Color.RED));
             return CompletableFuture.completedFuture(null);
         }
         

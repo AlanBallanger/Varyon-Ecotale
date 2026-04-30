@@ -23,7 +23,7 @@ import java.util.logging.Level;
 
 public class JobsModule implements ModuleInitializer {
 
-    private final Config<EcotaleJobsConfig> configHolder;
+    private final EcotaleJobsConfig earningsConfig;
     private final Config<TierMappingsConfig> tierMappingsConfig;
     private final Config<CraftingMappingsConfig> craftingMappingsConfig;
 
@@ -33,10 +33,10 @@ public class JobsModule implements ModuleInitializer {
 
     private JavaPlugin plugin;
 
-    public JobsModule(Config<EcotaleJobsConfig> configHolder,
+    public JobsModule(EcotaleJobsConfig earningsConfig,
                       Config<TierMappingsConfig> tierMappingsConfig,
                       Config<CraftingMappingsConfig> craftingMappingsConfig) {
-        this.configHolder = configHolder;
+        this.earningsConfig = earningsConfig;
         this.tierMappingsConfig = tierMappingsConfig;
         this.craftingMappingsConfig = craftingMappingsConfig;
     }
@@ -44,8 +44,6 @@ public class JobsModule implements ModuleInitializer {
     @Override
     public void setup(JavaPlugin plugin) {
         this.plugin = plugin;
-
-        configHolder.save();
 
         TierMappingsConfig mappings = tierMappingsConfig.get();
         int fromDefaults = mappings.mergeDefaults();
@@ -57,7 +55,7 @@ public class JobsModule implements ModuleInitializer {
             plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs: merged %d mobs from defaults", fromDefaults);
         }
 
-        EcotaleJobsConfig config = configHolder.get();
+        EcotaleJobsConfig config = earningsConfig;
         boolean craftingEnabled = config.getCrafting().isEnabled();
 
         if (craftingEnabled) {
@@ -138,8 +136,7 @@ public class JobsModule implements ModuleInitializer {
         plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs module shutdown.");
     }
 
-    public EcotaleJobsConfig getConfig() { return configHolder.get(); }
-    public Config<EcotaleJobsConfig> getConfigHolder() { return configHolder; }
+    public EcotaleJobsConfig getConfig() { return earningsConfig; }
     public TierMappingsConfig getTierMappings() { return tierMappingsConfig.get(); }
     public CraftingMappingsConfig getCraftingMappings() { return craftingMappingsConfig.get(); }
     public MobRewardSystem getMobRewardSystem() { return mobRewardSystem; }

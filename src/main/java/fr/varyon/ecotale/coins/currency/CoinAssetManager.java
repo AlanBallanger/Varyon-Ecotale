@@ -4,7 +4,6 @@ import com.hypixel.hytale.logger.HytaleLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -64,9 +63,9 @@ public class CoinAssetManager {
         }
         
         try {
-            Path manifestPath = assetPackRoot.resolve("manifest.json");
-            boolean manifestExisted = Files.exists(manifestPath);
-            
+            Path copperSample = coinsFolder.resolve("Coin_Copper.png");
+            boolean hadAssets = Files.isRegularFile(copperSample);
+
             if (!Files.exists(coinsFolder)) {
                 Files.createDirectories(coinsFolder);
                 logger.at(Level.INFO).log("[EcotaleCoins] Created asset pack structure: %s", coinsFolder);
@@ -81,9 +80,6 @@ public class CoinAssetManager {
                 Files.createDirectories(iconsFolder);
                 logger.at(Level.INFO).log("[EcotaleCoins] Created icons folder: %s", iconsFolder);
             }
-            
-            createManifestIfMissing();
-            createReadmeIfMissing();
             
             // Extract textures and models
             for (CoinType type : CoinType.values()) {
@@ -111,7 +107,7 @@ public class CoinAssetManager {
                 extractLanguageFileIfMissing(locale);
             }
             
-            this.firstTimeSetup = !manifestExisted;
+            this.firstTimeSetup = !hadAssets;
             
             initialized = true;
             logger.at(Level.INFO).log("[EcotaleCoins] Asset pack initialized at: %s", assetPackRoot);
@@ -122,72 +118,6 @@ public class CoinAssetManager {
             logger.at(Level.SEVERE).withCause(e).log("[EcotaleCoins] Failed to initialize asset pack");
             return false;
         }
-    }
-    
-    private void createManifestIfMissing() throws IOException {
-        Path manifestPath = assetPackRoot.resolve("manifest.json");
-        
-        if (Files.exists(manifestPath)) {
-            return;
-        }
-        
-        String manifest = """
-            {
-              "Group": "Ecotale",
-              "Name": "EcotaleCoins_Assets",
-              "Version": "1.0.0",
-              "Description": "Customizable coin textures - edit these to change coin appearance",
-              "Authors": [
-                {
-                  "Name": "Ecotale"
-                }
-              ],
-              "Website": "",
-              "Dependencies": {
-                "Ecotale:EcotaleCoins": "*"
-              },
-              "OptionalDependencies": {},
-              "DisabledByDefault": false,
-              "IncludesAssetPack": true,
-              "SubPlugins": []
-            }
-            """;
-        
-        Files.writeString(manifestPath, manifest, StandardCharsets.UTF_8);
-        logger.at(Level.INFO).log("[EcotaleCoins] Created manifest.json for asset pack");
-    }
-    
-    private void createReadmeIfMissing() throws IOException {
-        Path readmePath = assetPackRoot.resolve("README.txt");
-        
-        if (Files.exists(readmePath)) {
-            return;
-        }
-        
-        String readme = """
-            ===============================================
-            ECOTALE COINS - CUSTOMIZABLE ASSETS
-            ===============================================
-            
-            This folder contains textures and models for physical coins.
-            You can customize them by replacing the files!
-            
-            TEXTURES (Common/Items/Currency/Coins/):
-            - Coin_Copper.png    - Copper coin (value: 1)
-            - Coin_Iron.png      - Iron coin (value: 10)
-            - Coin_Cobalt.png    - Cobalt coin (value: 100)
-            - Coin_Gold.png      - Gold coin (value: 1,000)
-            - Coin_Mithril.png   - Mithril coin (value: 10,000)
-            - Coin_Adamantite.png - Adamantite coin (value: 100,000)
-            
-            HOW TO CUSTOMIZE:
-            1. Replace the PNG textures (keep 64x64 dimensions)
-            2. Restart the server to apply changes
-            
-            ===============================================
-            """;
-        
-        Files.writeString(readmePath, readme, StandardCharsets.UTF_8);
     }
     
     private static String capitalizeFirst(String s) {

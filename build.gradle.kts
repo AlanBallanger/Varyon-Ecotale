@@ -24,6 +24,7 @@ dependencies {
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
     compileOnly("net.cfh.vault:VaultUnlocked:2.18.3")
 
+    implementation("org.yaml:snakeyaml:2.2")
     implementation("com.h2database:h2:2.2.224")
     implementation("com.mysql:mysql-connector-j:9.1.0")
     implementation("com.google.code.gson:gson:2.10.1")
@@ -68,7 +69,8 @@ val fatJar = tasks.register<Jar>("fatJar") {
             it.name.contains("h2") ||
                 it.name.contains("mysql-connector-j") ||
                 it.name.contains("gson") ||
-                it.name.contains("slf4j")
+                it.name.contains("slf4j") ||
+                it.name.contains("snakeyaml")
         }
     from({ implementationJars.map { zipTree(it) } })
 
