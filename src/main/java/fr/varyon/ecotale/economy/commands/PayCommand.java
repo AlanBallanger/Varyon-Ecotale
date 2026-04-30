@@ -3,7 +3,6 @@ package fr.varyon.ecotale.economy.commands;
 import fr.varyon.ecotale.VaryonEcotalePlugin;
 import fr.varyon.ecotale.economy.EconomyManager;
 import fr.varyon.ecotale.economy.gui.PayGui;
-import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.CommandSender;
@@ -31,7 +30,6 @@ public class PayCommand extends AbstractAsyncCommand {
     
     public PayCommand() {
         super("pay", "Send money to another player");
-        this.setPermissionGroup(GameMode.Adventure);
         
         // Use OptionalArg to allow GUI mode when no args provided
         this.playerArg = this.withOptionalArg("player", "The player to send money to", ArgTypes.PLAYER_REF);
