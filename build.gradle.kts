@@ -1,3 +1,5 @@
+import java.io.File
+
 plugins {
     `maven-publish`
     id("hytale-mod") version "0.+"
@@ -41,6 +43,21 @@ java {
 }
 
 tasks.named<ProcessResources>("processResources") {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    val repoResourcesRoot = File(rootProject.projectDir.parentFile, "Resources")
+    val externalCommon = File(repoResourcesRoot, "Common")
+    val externalServer = File(repoResourcesRoot, "Server")
+
+    if (externalCommon.isDirectory) {
+        inputs.dir(externalCommon)
+        from(externalCommon) { into("Common") }
+    }
+    if (externalServer.isDirectory) {
+        inputs.dir(externalServer)
+        from(externalServer) { into("Server") }
+    }
+
     val replaceProperties = mapOf(
         "plugin_group" to findProperty("plugin_group"),
         "plugin_maven_group" to project.group,
@@ -54,6 +71,19 @@ tasks.named<ProcessResources>("processResources") {
     )
     filesMatching("manifest.json") { expand(replaceProperties) }
     inputs.properties(replaceProperties)
+
+    doFirst {
+        if (!externalCommon.isDirectory) {
+            logger.warn(
+                "Coin assets: ${externalCommon.invariantSeparatorsPath} missing — JAR will not ship Common/ coin files."
+            )
+        }
+        if (!externalServer.isDirectory) {
+            logger.warn(
+                "Coin assets: ${externalServer.invariantSeparatorsPath} missing — JAR will not ship Server/ coin files."
+            )
+        }
+    }
 }
 
 val fatJar = tasks.register<Jar>("fatJar") {
@@ -118,6 +148,8 @@ val syncAssets = tasks.register<Copy>("syncAssets") {
     from(layout.buildDirectory.dir("resources/main"))
     into("src/main/resources")
     exclude("manifest.json")
+    exclude("Common/**")
+    exclude("Server/**")
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 

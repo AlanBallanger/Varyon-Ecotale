@@ -11,12 +11,8 @@ import java.util.logging.Level;
 
 /**
  * Manages coin textures and models as a standalone asset pack.
- * 
- * Creates a complete Hytale asset pack in the mods folder:
- * mods/Ecotale_EcotaleCoins/
- * 
- * @author Ecotale
- * @since 1.0.0
+ * Sources are packaged from {@code ../Resources/Common} and {@code ../Resources/Server} into the mod JAR root;
+ * at runtime they are extracted under the server asset pack folder (e.g. {@code mods/Varyon_Varyon-Ecotale/}).
  */
 public class CoinAssetManager {
     
@@ -27,11 +23,11 @@ public class CoinAssetManager {
     private static final String LANGUAGES_PATH = "Server/Languages";
     private static final String MODEL_DROPPED = "Coin.blockymodel";
     private static final String MODEL_HELD = "Coin_Held.blockymodel";
-    // Assets stored in /templates/ so Hytale won't auto-load them
-    private static final String JAR_RESOURCE_BASE = "/templates/Common/Items/Currency/Coins/";
-    private static final String JAR_ICONS_BASE = "/templates/Common/Icons/Items/Coins/";
-    private static final String JAR_UI_BASE = "/templates/Common/UI/Custom/Pages/";
-    private static final String JAR_ITEMS_BASE = "/templates/Server/Item/Items/";
+    // Asset pack fragments shipped in the mod JAR (from ../Resources/Common and ../Resources/Server at build time)
+    private static final String JAR_RESOURCE_BASE = "/Common/Items/Currency/Coins/";
+    private static final String JAR_ICONS_BASE = "/Common/Icons/Items/Coins/";
+    private static final String JAR_UI_BASE = "/Common/UI/Custom/Pages/";
+    private static final String JAR_ITEMS_BASE = "/Server/Item/Items/";
     
     // Language file locales to extract
     private static final String[] LOCALES = {
@@ -214,7 +210,6 @@ public class CoinAssetManager {
             return; // Don't overwrite existing customizations
         }
         
-        // Language files are in Server/Languages/ (not templates) 
         String resourcePath = "/Server/Languages/" + locale + "/ecotalecoins.lang";
         try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
             if (is == null) {
