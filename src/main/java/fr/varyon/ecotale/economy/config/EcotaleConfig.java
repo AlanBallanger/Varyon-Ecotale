@@ -466,17 +466,28 @@ public class EcotaleConfig {
 
     // ========== Formatting ==========
     
-    /**
-     * Format amount with full precision (e.g., "$1,234.56")
-     */
-    public String format(double amount) {
+    private String formatNumeric(double amount) {
         StringBuilder pattern = new StringBuilder("#,##0");
         if (decimalPlaces > 0) {
             pattern.append(".");
             pattern.append("0".repeat(decimalPlaces));
         }
         DecimalFormat df = new DecimalFormat(pattern.toString());
-        return currencySymbol + df.format(amount);
+        return df.format(amount);
+    }
+
+    /**
+     * Format amount with full precision (e.g., "$1,234.56")
+     */
+    public String format(double amount) {
+        return currencySymbol + formatNumeric(amount);
+    }
+
+    /**
+     * Same numeric precision as {@link #format(double)}, but symbol after the amount (e.g. "1,234.56 Coins").
+     */
+    public String formatTrailingSymbol(double amount) {
+        return formatNumeric(amount) + " " + currencySymbol;
     }
     
     /**

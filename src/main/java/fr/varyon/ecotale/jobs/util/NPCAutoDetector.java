@@ -23,12 +23,12 @@ public class NPCAutoDetector {
     
     // Tier thresholds based on HP alone (conservative estimates)
     // We use HP-only since damage requires spawning the NPC
-    private static final int HP_CRITTER = 50;      // ≤50 HP
-    private static final int HP_PASSIVE = 100;     // 51-100 HP
-    private static final int HP_HOSTILE = 200;     // 101-200 HP
-    private static final int HP_ELITE = 300;       // 201-300 HP
-    private static final int HP_MINIBOSS = 400;    // 301-400 HP
-    // >400 HP = BOSS tier (very rare for non-dragons)
+    private static final int HP_NEUTRAL = 50;
+    private static final int HP_MINOR = 100;
+    private static final int HP_MODERATE = 200;
+    private static final int HP_MAJOR = 300;
+    private static final int HP_ELITE = 450;
+    private static final int HP_CHAMPION = 800;
     
     /**
      * Scan all registered NPC roles and detect any that aren't in the config.
@@ -95,47 +95,40 @@ public class NPCAutoDetector {
         
         // WORLDBOSS patterns
         if (lower.contains("dragon") || lower.contains("titan") || lower.contains("worldboss")) {
-            return "WORLDBOSS";
+            return "boss";
         }
         
-        // BOSS patterns
         if (lower.contains("boss") && !lower.contains("miniboss")) {
-            return "BOSS";
+            return "boss";
         }
         
-        // MINIBOSS patterns
         if (lower.contains("miniboss") || lower.contains("aberrant") || 
             lower.contains("shadow_knight") || lower.contains("werewolf")) {
-            return "MINIBOSS";
+            return "champion";
         }
         
-        // ELITE patterns
         if (lower.contains("elite") || lower.contains("golem") || lower.contains("ghoul") ||
             lower.contains("void") || lower.contains("yeti") || lower.contains("emberwulf")) {
-            return "ELITE";
+            return "elite";
         }
         
-        // CRITTER patterns (babies, small creatures)
         if (lower.contains("_chick") || lower.contains("_cub") || lower.contains("_baby") ||
             lower.contains("_piglet") || lower.contains("_lamb") || lower.contains("_foal") ||
             lower.contains("bunny") || lower.contains("mouse") || lower.contains("rat") ||
             lower.contains("squirrel") || lower.contains("frog") || lower.contains("bat") ||
             lower.contains("bird") || lower.contains("fish") || lower.contains("crab") ||
             lower.contains("jellyfish") || lower.contains("chicken") || lower.contains("pig")) {
-            return "CRITTER";
+            return "neutral";
         }
         
-        // PASSIVE patterns
         if (lower.contains("skeleton") || lower.contains("sheep") || lower.contains("deer") ||
             lower.contains("goat") || lower.contains("_calf") || lower.contains("feran") ||
             lower.contains("klops") || lower.contains("spirit") || lower.contains("scarak_fighter") ||
             lower.contains("scarak_seeker") || lower.contains("kweebec_sapling")) {
-            return "PASSIVE";
+            return "minor";
         }
         
-        // Default to HOSTILE for unknown combat NPCs
-        // This is safe - better to give a small reward than none
-        return "HOSTILE";
+        return "major";
     }
     
     /**
@@ -194,12 +187,13 @@ public class NPCAutoDetector {
             int hp = role.getInitialMaxHealth();
             
             // HP-based tier assignment
-            if (hp <= HP_CRITTER) return "CRITTER";
-            if (hp <= HP_PASSIVE) return "PASSIVE";
-            if (hp <= HP_HOSTILE) return "HOSTILE";
-            if (hp <= HP_ELITE) return "ELITE";
-            if (hp <= HP_MINIBOSS) return "MINIBOSS";
-            return "BOSS";
+            if (hp <= HP_NEUTRAL) return "neutral";
+            if (hp <= HP_MINOR) return "minor";
+            if (hp <= HP_MODERATE) return "moderate";
+            if (hp <= HP_MAJOR) return "major";
+            if (hp <= HP_ELITE) return "elite";
+            if (hp <= HP_CHAMPION) return "champion";
+            return "boss";
             
         } catch (Exception e) {
             return null;

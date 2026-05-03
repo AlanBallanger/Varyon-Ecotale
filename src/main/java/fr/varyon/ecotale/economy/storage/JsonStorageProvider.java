@@ -21,8 +21,7 @@ import java.util.stream.Stream;
 /**
  * JSON per-player file storage provider.
  * 
- * Storage Structure:
- *   Universe/Ecotale/
+ * Storage structure under plugin data directory (e.g. {@code mods/Varyon_Varyon-Ecotale/}):
  *     players/
  *       <uuid>.json      <- Current data
  *       <uuid>.json.bak  <- Previous save (backup)
@@ -39,17 +38,38 @@ import java.util.stream.Stream;
  * - Internal operations are atomic at file level
  */
 public class JsonStorageProvider implements StorageProvider {
-    
-    /** Data path: mods/Ecotale_Ecotale/ - same location as plugin config */
-    private static final Path ECOTALE_PATH = Path.of("mods", "Ecotale_Ecotale");
-    private static final Path PLAYERS_PATH = ECOTALE_PATH.resolve("players");
-    private static final Path LEGACY_PATH = ECOTALE_PATH.resolve("balances.json");
-    
     private final HytaleLogger logger;
     private final AtomicInteger playerCount = new AtomicInteger(0);
-    
+
     public JsonStorageProvider() {
         this.logger = HytaleLogger.getLogger().getSubLogger("Ecotale-Storage");
+    }
+
+    private Path dataRoot() {
+        return VaryonEcotalePlugin.getInstance().getDataDirectory();
+    }
+
+    private Path playersPath() {
+        return dataRoot().resolve("players");
+    }
+
+    private Path legacyBalancesAggregatePath() {
+        return dataRoot().resolve("balances.json");
+    }
+
+    private boolean hasPerPlayerJsonFiles() {
+        Path dir = playersPath();
+        if (!Files.isDirectory(dir)) {
+            return false;
+        }
+        try (Stream<Path> s = Files.list(dir)) {
+            return s.anyMatch(p -> {
+                String n = p.getFileName().toString();
+                return n.endsWith(".json") && !n.endsWith(".bak") && !n.endsWith(".tmp");
+            });
+        } catch (IOException e) {
+            return false;
+        }
     }
     
     @Override
@@ -57,15 +77,14 @@ public class JsonStorageProvider implements StorageProvider {
         return CompletableFuture.runAsync(() -> {
             try {
                 // Create directories if needed
-                Files.createDirectories(PLAYERS_PATH);
-                
-                // Check for legacy migration
-                if (Files.exists(LEGACY_PATH)) {
+                Files.createDirectories(playersPath());
+
+                Path legacyBalances = legacyBalancesAggregatePath();
+                if (Files.exists(legacyBalances) && !hasPerPlayerJsonFiles()) {
                     migrateLegacyFormat();
                 }
-                
-                // Count existing players
-                try (Stream<Path> files = Files.list(PLAYERS_PATH)) {
+
+                try (Stream<Path> files = Files.list(playersPath())) {
                     int count = (int) files.filter(p -> p.toString().endsWith(".json")).count();
                     playerCount.set(count);
                 }
@@ -183,7 +202,7 @@ public class JsonStorageProvider implements StorageProvider {
         return CompletableFuture.supplyAsync(() -> {
             Map<UUID, PlayerBalance> allBalances = new ConcurrentHashMap<>();
             
-            try (Stream<Path> files = Files.list(PLAYERS_PATH)) {
+            try (Stream<Path> files = Files.list(playersPath())) {
                 files.filter(p -> p.toString().endsWith(".json") && !p.toString().endsWith(".bak"))
                      .forEach(path -> {
                          String filename = path.getFileName().toString();
@@ -246,15 +265,15 @@ public class JsonStorageProvider implements StorageProvider {
     // ========== Helper Methods ==========
     
     private Path getPlayerFile(UUID uuid) {
-        return PLAYERS_PATH.resolve(uuid.toString() + ".json");
+        return playersPath().resolve(uuid.toString() + ".json");
     }
     
     private Path getBackupFile(UUID uuid) {
-        return PLAYERS_PATH.resolve(uuid.toString() + ".json.bak");
+        return playersPath().resolve(uuid.toString() + ".json.bak");
     }
     
     private Path getTempFile(UUID uuid) {
-        return PLAYERS_PATH.resolve(uuid.toString() + ".json.tmp");
+        return playersPath().resolve(uuid.toString() + ".json.tmp");
     }
     
     // ========== Legacy Migration ==========
@@ -267,10 +286,10 @@ public class JsonStorageProvider implements StorageProvider {
         logger.at(Level.INFO).log("Migrating from legacy balances.json format...");
         
         try {
-            // Import the old BalanceStorage class for reading legacy format
-            fr.varyon.ecotale.economy.BalanceStorage legacyStorage = 
-                RawJsonReader.readSync(LEGACY_PATH, fr.varyon.ecotale.economy.BalanceStorage.CODEC, logger);
-            
+            Path legacySingleFile = legacyBalancesAggregatePath();
+            fr.varyon.ecotale.economy.BalanceStorage legacyStorage =
+                RawJsonReader.readSync(legacySingleFile, fr.varyon.ecotale.economy.BalanceStorage.CODEC, logger);
+
             if (legacyStorage != null && legacyStorage.getBalances() != null) {
                 int migrated = 0;
                 for (PlayerBalance balance : legacyStorage.getBalances()) {
@@ -278,11 +297,10 @@ public class JsonStorageProvider implements StorageProvider {
                     BsonUtil.writeSync(playerFile, PlayerBalance.CODEC, balance, logger);
                     migrated++;
                 }
-                
-                // Rename old file to mark as migrated
-                Path migratedPath = ECOTALE_PATH.resolve("balances.json.migrated");
-                Files.move(LEGACY_PATH, migratedPath, StandardCopyOption.REPLACE_EXISTING);
-                
+
+                Path migratedPath = dataRoot().resolve("balances.json.migrated");
+                Files.move(legacySingleFile, migratedPath, StandardCopyOption.REPLACE_EXISTING);
+
                 logger.at(Level.INFO).log("Migration complete: %d players migrated", migrated);
             }
         } catch (Exception e) {

@@ -1,0 +1,8 @@
+# Numeric weight per tier key (English). Higher = harder reward band.
+neutral = 0
+minor = 1
+moderate = 2
+major = 8
+elite = 12
+champion = 25
+boss = 70

@@ -9,7 +9,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * Single reward tier config: CoinType, MinCoins, MaxCoins, DropChance.
+ * Reward tier: CoinType, MinCoins, MaxCoins, DropChance.
+ *
+ * <p>For mob kills, amounts are usually COPPER-denominated counts chosen uniformly in {@code [MinCoins, MaxCoins]},
+ * then scaled by anti-farm, VIP, and (unless disabled) Varyon HP multiplier — see {@link EcotaleJobsConfig}.
  */
 public class TierConfig {
     

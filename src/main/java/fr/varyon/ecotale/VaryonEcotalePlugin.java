@@ -9,6 +9,8 @@ import fr.varyon.ecotale.jobs.config.CraftingMappingsConfig;
 import fr.varyon.ecotale.jobs.config.EarningsConfigLoader;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig;
 import fr.varyon.ecotale.jobs.config.TierMappingsConfig;
+import fr.varyon.ecotale.economy.systems.BalanceHudSystem;
+import fr.varyon.ecotale.economy.util.TranslationHelper;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.util.Config;
@@ -57,6 +59,7 @@ public class VaryonEcotalePlugin extends JavaPlugin {
 
         if (cfg.isEnableJobs()) {
             Path earningsPath = getDataDirectory().resolve("earnings_config.yml");
+            EarningsConfigLoader.installDefaultYamlIfMissing(earningsPath, getLogger(), VaryonEcotalePlugin.class);
             EcotaleJobsConfig earnings = EarningsConfigLoader.load(earningsPath, getLogger());
             this.jobsModule = new JobsModule(earnings, tierMappingsConfig, craftingMappingsConfig);
             jobsModule.setup(this);
@@ -88,4 +91,25 @@ public class VaryonEcotalePlugin extends JavaPlugin {
     public CoinsModule getCoinsModule() { return coinsModule; }
     public JobsModule getJobsModule() { return jobsModule; }
     public EconomyModule getEconomyModule() { return economyModule; }
+
+    /**
+     * Reload economy config.json, Tier/Crafting mappings, earnings YAML (jobs), Physical_Currency (coins), HUDs.
+     * Does not change EnableJobs/EnableCoins or storage provider until server restart.
+     */
+    public void reloadConfigurationFromDisk() {
+        economyConfig.load();
+        TranslationHelper.invalidateCache();
+        tierMappingsConfig.load();
+        craftingMappingsConfig.load();
+        if (jobsModule != null) {
+            jobsModule.reloadFromDisk(this);
+        }
+        if (coinsModule != null && coinsModule.isEnabled()) {
+            if (!coinsModule.reloadPhysicalCurrency()) {
+                getLogger().at(Level.WARNING).log("[Varyon-Ecotale] Physical_Currency.json reload reported failure.");
+            }
+        }
+        BalanceHudSystem.refreshAllHuds();
+        getLogger().at(Level.INFO).log("[Varyon-Ecotale] Configuration reload complete.");
+    }
 }

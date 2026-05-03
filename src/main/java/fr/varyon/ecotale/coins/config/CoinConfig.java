@@ -169,32 +169,30 @@ public class CoinConfig {
         ));
         
         defaultCoins.put("iron", new CoinTypeConfig(
-            "iron", true, 10L, "Coin_Iron", "Iron"
+            "iron", true, 100L, "Coin_Iron", "Iron"
         ));
         
         defaultCoins.put("cobalt", new CoinTypeConfig(
-            "cobalt", true, 100L, "Coin_Cobalt", "Cobalt"
+            "cobalt", true, 10_000L, "Coin_Cobalt", "Cobalt"
         ));
         
         defaultCoins.put("gold", new CoinTypeConfig(
-            "gold", true, 1000L, "Coin_Gold", "Gold"
+            "gold", true, 1_000_000L, "Coin_Gold", "Gold"
         ));
         
         if (useLegacyValues) {
-            // Legacy order (v1.0 - incorrect)
             defaultCoins.put("mithril", new CoinTypeConfig(
-                "mithril", true, 10000L, "Coin_Mithril", "Mithril"
+                "mithril", true, 100_000_000L, "Coin_Mithril", "Mithril"
             ));
             defaultCoins.put("adamantite", new CoinTypeConfig(
-                "adamantite", true, 100000L, "Coin_Adamantite", "Adamantite"
+                "adamantite", true, 10_000_000_000L, "Coin_Adamantite", "Adamantite"
             ));
         } else {
-            // Correct order (v2.0) - Adamantite before Mithril
-            defaultCoins.put("adamantite", new CoinTypeConfig(
-                "adamantite", true, 10000L, "Coin_Adamantite", "Adamantite"
-            ));
             defaultCoins.put("mithril", new CoinTypeConfig(
-                "mithril", true, 100000L, "Coin_Mithril", "Mithril"
+                "mithril", true, 100_000_000L, "Coin_Mithril", "Mithril"
+            ));
+            defaultCoins.put("adamantite", new CoinTypeConfig(
+                "adamantite", true, 10_000_000_000L, "Coin_Adamantite", "Adamantite"
             ));
         }
         

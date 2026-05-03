@@ -14,14 +14,19 @@ public class RewardNotifier {
     
     private static long minRewardToShow = 1;
     private static boolean enabled = true;
+    private static boolean mobKillBreakdown = false;
     
     /**
      * Configure the notifier settings
      */
-    public static void configure(boolean showRewards, double minReward, String notifyFormat) {
+    public static void configure(boolean showRewards, double minReward, String notifyFormat, boolean showMobKillBreakdown) {
         enabled = showRewards;
         minRewardToShow = (long) minReward;
-        // Format not currently used - BalanceHudSystem handles display
+        mobKillBreakdown = showMobKillBreakdown;
+    }
+    
+    public static boolean isMobKillBreakdownEnabled() {
+        return mobKillBreakdown;
     }
     
     /**
@@ -68,5 +73,9 @@ public class RewardNotifier {
     
     public static long getMinRewardToShow() {
         return minRewardToShow;
+    }
+
+    public static boolean shouldShowMobKillBreakdown(long amountCuivreEquiv) {
+        return mobKillBreakdown && amountCuivreEquiv >= minRewardToShow;
     }
 }

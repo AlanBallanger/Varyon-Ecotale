@@ -104,7 +104,7 @@ public class NPCClassifier {
         /** Nombre sanitizado del mob */
         public final String mobName;
         
-        /** Tier calculado (CRITTER, PASSIVE, HOSTILE, ELITE, MINIBOSS, BOSS, WORLDBOSS) */
+        /** Tier calculado (neutral … boss; alinea con tier_mapping.toml). */
         public final String tier;
         
         /** Threat score calculado (útil para comparaciones) */
@@ -510,7 +510,7 @@ public class NPCClassifier {
                     return new TierDecision(hpTier, 0.85f, "HP_PRIMARY");
                 } else {
                     // 2+ tiers de diferencia - algo especial, subir 1
-                    String adjusted = tierByRank(hpRank + 1);
+                    String adjusted = tierByRank(Math.min(hpRank + 1, 7));
                     return new TierDecision(adjusted, 0.75f, "SCORE_ADJUSTED");
                 }
             } else if (hpRank > scoreRank) {
@@ -551,13 +551,13 @@ public class NPCClassifier {
      */
     private static String getTierFromHP(int hp) {
         if (hp <= 0) return "UNKNOWN";
-        if (hp <= 30) return "CRITTER";       // Chickens, rats, etc
-        if (hp <= 100) return "PASSIVE";      // Sheep, basic animals
-        if (hp <= 200) return "HOSTILE";      // Standard enemies
-        if (hp <= 350) return "ELITE";        // Stronger variants
-        if (hp <= 600) return "MINIBOSS";     // Rex, Aberrants
-        if (hp <= 1500) return "BOSS";        // Dungeon bosses
-        return "WORLDBOSS";                   // Dragons, world events
+        if (hp <= 50) return "neutral";
+        if (hp <= 100) return "minor";
+        if (hp <= 200) return "moderate";
+        if (hp <= 300) return "major";
+        if (hp <= 450) return "elite";
+        if (hp <= 800) return "champion";
+        return "boss";
     }
     
     /**
@@ -565,13 +565,14 @@ public class NPCClassifier {
      */
     private static String getTierFromScore(double score) {
         if (score <= 0) return "UNKNOWN";
-        if (score <= 50) return "CRITTER";
-        if (score <= 150) return "PASSIVE";
-        if (score <= 350) return "HOSTILE";
-        if (score <= 600) return "ELITE";
-        if (score <= 1000) return "MINIBOSS";
-        if (score <= 2500) return "BOSS";
-        return "WORLDBOSS";
+        if (score <= 60) return "neutral";
+        if (score <= 180) return "minor";
+        if (score <= 320) return "moderate";
+        if (score <= 480) return "major";
+        if (score <= 720) return "elite";
+        if (score <= 1200) return "champion";
+        if (score <= 3000) return "boss";
+        return "boss";
     }
     
     /**
@@ -582,31 +583,26 @@ public class NPCClassifier {
         if (name.toLowerCase().contains("dragon") || 
             name.toLowerCase().contains("titan") ||
             name.toLowerCase().contains("colossus")) {
-            return new TierDecision("WORLDBOSS", 0.55f, "NAME_PATTERN_WORLDBOSS");
+            return new TierDecision("boss", 0.55f, "NAME_PATTERN_WORLDBOSS");
         }
         
-        // BOSS patterns
         if (BOSS_PATTERNS.matcher(name).matches()) {
-            return new TierDecision("BOSS", 0.45f, "NAME_PATTERN_BOSS");
+            return new TierDecision("boss", 0.45f, "NAME_PATTERN_BOSS");
         }
         
-        // ELITE patterns
         if (ELITE_PATTERNS.matcher(name).matches()) {
-            return new TierDecision("ELITE", 0.55f, "NAME_PATTERN_ELITE");
+            return new TierDecision("elite", 0.55f, "NAME_PATTERN_ELITE");
         }
         
-        // CRITTER patterns
         if (CRITTER_PATTERNS.matcher(name).matches()) {
-            return new TierDecision("CRITTER", 0.70f, "NAME_PATTERN_CRITTER");
+            return new TierDecision("neutral", 0.70f, "NAME_PATTERN_CRITTER");
         }
         
-        // PASSIVE patterns
         if (PASSIVE_PATTERNS.matcher(name).matches()) {
-            return new TierDecision("PASSIVE", 0.65f, "NAME_PATTERN_PASSIVE");
+            return new TierDecision("minor", 0.65f, "NAME_PATTERN_PASSIVE");
         }
         
-        // Default: HOSTILE (safest assumption)
-        return new TierDecision("HOSTILE", 0.40f, "DEFAULT_HOSTILE");
+        return new TierDecision("major", 0.40f, "DEFAULT_MAJOR");
     }
     
     // =========================================================================
@@ -656,13 +652,13 @@ public class NPCClassifier {
      */
     private static int tierRank(String tier) {
         switch (tier) {
-            case "CRITTER": return 1;
-            case "PASSIVE": return 2;
-            case "HOSTILE": return 3;
-            case "ELITE": return 4;
-            case "MINIBOSS": return 5;
-            case "BOSS": return 6;
-            case "WORLDBOSS": return 7;
+            case "neutral": return 1;
+            case "minor": return 2;
+            case "moderate": return 3;
+            case "major": return 4;
+            case "elite": return 5;
+            case "champion": return 6;
+            case "boss": return 7;
             default: return 0;
         }
     }
@@ -672,13 +668,13 @@ public class NPCClassifier {
      */
     private static String tierByRank(int rank) {
         switch (rank) {
-            case 1: return "CRITTER";
-            case 2: return "PASSIVE";
-            case 3: return "HOSTILE";
-            case 4: return "ELITE";
-            case 5: return "MINIBOSS";
-            case 6: return "BOSS";
-            case 7: return "WORLDBOSS";
+            case 1: return "neutral";
+            case 2: return "minor";
+            case 3: return "moderate";
+            case 4: return "major";
+            case 5: return "elite";
+            case 6: return "champion";
+            case 7: return "boss";
             default: return "UNKNOWN";
         }
     }

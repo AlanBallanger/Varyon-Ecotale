@@ -280,4 +280,66 @@ public class MySQLStorageProvider implements StorageProvider {
     public int getPlayerCount() {
         return playerCount;
     }
+
+    @Override
+    public CompletableFuture<List<UUID>> findUuidsBySavedPlayerName(@Nonnull String playerName) {
+        String needle = playerName.trim();
+        if (needle.isEmpty()) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String exactSql = "SELECT uuid FROM " + tablePrefix + "balances WHERE player_name IS NOT NULL AND LOWER(player_name) = LOWER(?)";
+                List<UUID> exactMatches = new ArrayList<>();
+                try (PreparedStatement ps = connection.prepareStatement(exactSql)) {
+                    ps.setString(1, needle);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            exactMatches.add(UUID.fromString(rs.getString("uuid")));
+                        }
+                    }
+                }
+                if (!exactMatches.isEmpty()) {
+                    return List.copyOf(exactMatches);
+                }
+                String prefixSql = "SELECT uuid FROM " + tablePrefix + "balances WHERE player_name IS NOT NULL AND LOWER(player_name) LIKE CONCAT(LOWER(?), '%')";
+                List<UUID> prefMatches = new ArrayList<>();
+                try (PreparedStatement ps = connection.prepareStatement(prefixSql)) {
+                    ps.setString(1, needle);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            prefMatches.add(UUID.fromString(rs.getString("uuid")));
+                        }
+                    }
+                }
+                if (prefMatches.size() == 1) {
+                    return List.copyOf(prefMatches);
+                }
+                return List.of();
+            } catch (SQLException e) {
+                LOGGER.at(Level.WARNING).log("findUuidsBySavedPlayerName failed: %s", e.getMessage());
+                return List.of();
+            }
+        }, executor);
+    }
+
+    @Override
+    public CompletableFuture<String> getSavedDisplayName(@Nonnull UUID playerUuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String sql = "SELECT player_name FROM " + tablePrefix + "balances WHERE uuid = ?";
+                try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                    ps.setString(1, playerUuid.toString());
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            return rs.getString("player_name");
+                        }
+                    }
+                }
+            } catch (SQLException e) {
+                LOGGER.at(Level.WARNING).log("getSavedDisplayName failed: %s", e.getMessage());
+            }
+            return null;
+        }, executor);
+    }
 }

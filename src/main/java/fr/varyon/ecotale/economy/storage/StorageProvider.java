@@ -3,6 +3,7 @@ package fr.varyon.ecotale.economy.storage;
 import fr.varyon.ecotale.economy.PlayerBalance;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -91,4 +92,19 @@ public interface StorageProvider {
      * Get the number of players with saved data.
      */
     int getPlayerCount();
+
+    /**
+     * Find UUIDs whose last known {@code player_name} in storage matches {@code playerName}
+     * (exact case-insensitive match, or unique case-insensitive prefix match if no exact row).
+     */
+    default CompletableFuture<List<UUID>> findUuidsBySavedPlayerName(@Nonnull String playerName) {
+        return CompletableFuture.completedFuture(List.of());
+    }
+
+    /**
+     * Last persisted display name for the account, if the backend stores it.
+     */
+    default CompletableFuture<String> getSavedDisplayName(@Nonnull UUID playerUuid) {
+        return CompletableFuture.completedFuture(null);
+    }
 }

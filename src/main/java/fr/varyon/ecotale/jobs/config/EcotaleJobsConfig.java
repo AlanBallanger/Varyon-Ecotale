@@ -11,6 +11,12 @@ import java.util.*;
 
 /**
  * Main configuration class for the jobs / earnings module (loaded from earnings_config.yml).
+ *
+ * <p><b>Mob payout:</b> for {@link MobKillsConfig#getTiers()}, {@link TierConfig#getMinCoins()}–{@link TierConfig#getMaxCoins()}
+ * are a uniform random count in {@link TierConfig#getCoinTypeName()} units (typically COPPER = base value 1).
+ * The rolled amount is then multiplied by anti-farm, {@link EcotaleJobsConfig.VipConfig}, and (by default)
+ * the same factor Varyon uses for mob HP: {@link MobKillsConfig#isApplyVaryonHealthScaling()}
+ * reads {@code MobScalingComponent#getHealthMultiplier()} via reflection when {@code true}.
  */
 public class EcotaleJobsConfig {
     
@@ -51,6 +57,8 @@ public class EcotaleJobsConfig {
         public static final BuilderCodec<MobKillsConfig> CODEC = BuilderCodec.builder(MobKillsConfig.class, MobKillsConfig::new)
             .append(new KeyedCodec<>("Enabled", Codec.BOOLEAN),
                 (c, v, e) -> c.enabled = v, (c, e) -> c.enabled).add()
+            .append(new KeyedCodec<>("ApplyVaryonHealthScaling", Codec.BOOLEAN),
+                (c, v, e) -> c.applyVaryonHealthScaling = v, (c, e) -> c.applyVaryonHealthScaling).add()
             .append(new KeyedCodec<>("Tiers", new MapCodec<>(TierConfig.CODEC, HashMap::new)),
                 (c, v, e) -> c.tiers = v, (c, e) -> c.tiers).add()
             .append(new KeyedCodec<>("Security", SecurityConfig.CODEC),
@@ -58,10 +66,12 @@ public class EcotaleJobsConfig {
             .build();
 
         private boolean enabled = true;
+        private boolean applyVaryonHealthScaling = true;
         private Map<String, TierConfig> tiers = createDefaultTiers();
         private SecurityConfig security = new SecurityConfig();
 
         public boolean isEnabled() { return enabled; }
+        public boolean isApplyVaryonHealthScaling() { return applyVaryonHealthScaling; }
         public Map<String, TierConfig> getTiers() { return tiers; }
         public SecurityConfig getSecurity() { return security; }
 
@@ -84,48 +94,17 @@ public class EcotaleJobsConfig {
         private static Map<String, TierConfig> createDefaultTiers() {
             Map<String, TierConfig> t = new LinkedHashMap<>();
             
-            // ==========================================================================
-            // BALANCED TIER REWARDS - Based on actual game danger scores
-            // Danger Score = HP + (DMG * 4) * aggression_modifier
-            // ==========================================================================
+            // Tier keys: neutral, minor, moderate, major, elite, champion, boss (see TierMappings.json).
+            // Amounts are counts of copper coins; physical payout consolidates (100 copper → 1 iron, etc.).
             
-            // NONE - No reward (for excluded NPCs)
             t.put("NONE", new TierConfig("COPPER", 0, 0, 0));
-            
-            // CRITTER (Danger 0-50) - Tiny creatures, babies
-            // Examples: Bunny (25 HP), Chicken (29 HP), Rat (21 HP)
-            // Very easy to kill, minimal reward
-            t.put("CRITTER", new TierConfig("COPPER", 0, 1, 40));
-            
-            // PASSIVE (Danger 50-100) - Non-aggressive or weak
-            // Examples: Skeleton (92 HP), Sheep (81 HP), Feran (49-61 HP)
-            // Easy kills, small consistent reward
-            t.put("PASSIVE", new TierConfig("COPPER", 1, 2, 100));
-            
-            // HOSTILE (Danger 100-300) - Standard combat enemies
-            // Examples: Zombie (49 HP, 18 DMG), Trork_Warrior (61 HP, 23 DMG)
-            // Normal gameplay loop, moderate reward
-            t.put("HOSTILE", new TierConfig("COPPER", 4, 10, 100));
-            
-            // ELITE (Danger 300-700) - Tough enemies requiring skill
-            // Examples: Ghoul (193 HP, 48 DMG), Crocodile (145 HP, 48 DMG), Yeti (226 HP)
-            // Challenging fights, iron coin reward (1 Iron = 10 Copper equivalent)
-            t.put("ELITE", new TierConfig("IRON", 2, 5, 100));
-            
-            // MINIBOSS (Danger 700-1200) - Mini-boss level threats
-            // Examples: Rex_Cave (400 HP, 68 DMG), Werewolf (283 HP, 66 DMG), Shadow_Knight (400 HP, 119 DMG)
-            // Requires preparation and skill, cobalt reward (1 Cobalt = 100 Copper equivalent)
-            t.put("MINIBOSS", new TierConfig("COBALT", 2, 4, 100));
-            
-            // BOSS (Reserved for future dungeon bosses)
-            // Currently no standard bosses reach this tier
-            // Gold reward (1 Gold = 1000 Copper equivalent)
-            t.put("BOSS", new TierConfig("GOLD", 1, 3, 100));
-            
-            // WORLDBOSS (Danger 1000+) - Dragons and ultimate threats
-            // Examples: Dragon_Fire (400 HP, BOSS type), Dragon_Frost (400 HP, BOSS type)
-            // Ultimate challenge, mithril reward (1 Mithril = 10000 Copper equivalent)
-            t.put("WORLDBOSS", new TierConfig("MITHRIL", 1, 2, 100));
+            t.put("neutral", new TierConfig("COPPER", 1, 4, 100));
+            t.put("minor", new TierConfig("COPPER", 6, 10, 100));
+            t.put("moderate", new TierConfig("COPPER", 10, 20, 100));
+            t.put("major", new TierConfig("COPPER", 25, 40, 100));
+            t.put("elite", new TierConfig("COPPER", 40, 60, 100));
+            t.put("champion", new TierConfig("COPPER", 80, 120, 100));
+            t.put("boss", new TierConfig("COPPER", 150, 300, 100));
             
             return t;
         }
@@ -179,13 +158,17 @@ public class EcotaleJobsConfig {
                 (c, v, e) -> c.showRewards = v, (c, e) -> c.showRewards).add()
             .append(new KeyedCodec<>("MinRewardToShow", Codec.LONG),
                 (c, v, e) -> c.minRewardToShow = v, (c, e) -> c.minRewardToShow).add()
+            .append(new KeyedCodec<>("ShowMobKillBreakdown", Codec.BOOLEAN),
+                (c, v, e) -> c.showMobKillBreakdown = v, (c, e) -> c.showMobKillBreakdown).add()
             .build();
         
         private boolean showRewards = true;
         private long minRewardToShow = 1;
+        private boolean showMobKillBreakdown = false;
         
         public boolean isShowRewards() { return showRewards; }
         public long getMinRewardToShow() { return minRewardToShow; }
+        public boolean isShowMobKillBreakdown() { return showMobKillBreakdown; }
     }
     
     // =========================================================================

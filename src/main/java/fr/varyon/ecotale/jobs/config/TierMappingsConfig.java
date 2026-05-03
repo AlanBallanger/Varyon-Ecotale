@@ -9,11 +9,11 @@ import java.util.*;
 
 /**
  * Mob-to-tier mappings config. Separate file for auto-merge without losing customizations.
+ * Tier names: neutral, minor, moderate, major, elite, champion, boss (no {@code standard}).
  */
 public class TierMappingsConfig {
     
-    // Current mappings version - increment when adding new mobs
-    public static final int CURRENT_VERSION = 1;
+    public static final int CURRENT_VERSION = 3;
     
     public static final BuilderCodec<TierMappingsConfig> CODEC = BuilderCodec.builder(TierMappingsConfig.class, TierMappingsConfig::new)
         .append(new KeyedCodec<>("Version", Codec.INTEGER),
@@ -33,7 +33,7 @@ public class TierMappingsConfig {
     private boolean autoMergeNewMobs = true;
     private Map<String, String> tierMappings = createDefaultMappings();
     private List<String> exclusions = createDefaultExclusions();
-    private String defaultTier = "HOSTILE";
+    private String defaultTier = "major";
     
     // Getters
     public int getVersion() { return version; }
@@ -109,190 +109,190 @@ public class TierMappingsConfig {
         
         // ============ WORLDBOSS (Danger 1000+) ============
         // Dragons are the ultimate bosses
-        m.put("Dragon_*", "WORLDBOSS");
-        m.put("*_Titan", "WORLDBOSS");
+        m.put("Dragon_*", "boss");
+        m.put("*_Titan", "boss");
         
         // ============ MINIBOSS (Danger 700-1200) ============
         // These are the hardest non-dragon enemies
-        m.put("Shadow_Knight", "MINIBOSS");      // 400 HP, 119 DMG -> 1139
-        m.put("Zombie_Aberrant", "MINIBOSS");    // 400 HP, 119 DMG -> 1139  
-        m.put("Zombie_Aberrant_Big", "MINIBOSS"); // 341 HP, 86 DMG -> 890
-        m.put("Rex_Cave", "MINIBOSS");           // 400 HP, 68 DMG -> 874
-        m.put("Werewolf", "MINIBOSS");           // 283 HP, 66 DMG -> 711
+        m.put("Shadow_Knight", "champion");      // 400 HP, 119 DMG -> 1139
+        m.put("Zombie_Aberrant", "champion");    // 400 HP, 119 DMG -> 1139  
+        m.put("Zombie_Aberrant_Big", "champion"); // 341 HP, 86 DMG -> 890
+        m.put("Rex_Cave", "champion");           // 400 HP, 68 DMG -> 874
+        m.put("Werewolf", "champion");           // 283 HP, 66 DMG -> 711
         
         // ============ ELITE (Danger 300-700) ============
         // Strong enemies that require skill to defeat
-        m.put("Emberwulf", "ELITE");             // 193 HP, 64 DMG -> 584
-        m.put("Ghoul", "ELITE");                 // 193 HP, 48 DMG -> 500
-        m.put("Crocodile", "ELITE");             // 145 HP, 48 DMG -> 438
-        m.put("Tiger_Sabertooth", "ELITE");      // 124 HP, 46 DMG -> 400
-        m.put("Whale_Humpback", "ELITE");        // 400 HP, peaceful giant
-        m.put("Spawn_Void", "ELITE");            // 193 HP, 48 DMG -> 385
-        m.put("Golem_Crystal_Sand", "ELITE");    // 193 HP, 47 DMG -> 381
-        m.put("Wraith", "ELITE");                // 193 HP, 40 DMG -> 353
-        m.put("Cow_Undead", "ELITE");            // 124 HP, 35 DMG -> 343
-        m.put("Toad_Rhino*", "ELITE");           // 124 HP, 35 DMG -> 343
-        m.put("Leopard_Snow", "ELITE");          // 103 HP, 36 DMG -> 321
-        m.put("Goblin_Duke*", "ELITE");          // Boss phases
-        m.put("Hound_Bleached", "ELITE");        // 126 HP, 30 DMG -> 320
-        m.put("Zombie_Aberrant_Small", "ELITE"); // 126 HP, 30 DMG -> 320
-        m.put("Yeti", "ELITE");                  // 226 HP, tough mythic
-        m.put("Golem_*", "ELITE");               // All golems are elite
-        m.put("*_Void", "ELITE");                // Void creatures
+        m.put("Emberwulf", "elite");             // 193 HP, 64 DMG -> 584
+        m.put("Ghoul", "elite");                 // 193 HP, 48 DMG -> 500
+        m.put("Crocodile", "elite");             // 145 HP, 48 DMG -> 438
+        m.put("Tiger_Sabertooth", "elite");      // 124 HP, 46 DMG -> 400
+        m.put("Whale_Humpback", "elite");        // 400 HP, peaceful giant
+        m.put("Spawn_Void", "elite");            // 193 HP, 48 DMG -> 385
+        m.put("Golem_Crystal_Sand", "elite");    // 193 HP, 47 DMG -> 381
+        m.put("Wraith", "elite");                // 193 HP, 40 DMG -> 353
+        m.put("Cow_Undead", "elite");            // 124 HP, 35 DMG -> 343
+        m.put("Toad_Rhino*", "elite");           // 124 HP, 35 DMG -> 343
+        m.put("Leopard_Snow", "elite");          // 103 HP, 36 DMG -> 321
+        m.put("Goblin_Duke*", "elite");          // Boss phases
+        m.put("Hound_Bleached", "elite");        // 126 HP, 30 DMG -> 320
+        m.put("Zombie_Aberrant_Small", "elite"); // 126 HP, 30 DMG -> 320
+        m.put("Yeti", "elite");                  // 226 HP, tough mythic
+        m.put("Golem_*", "elite");               // All golems are elite
+        m.put("*_Void", "elite");                // Void creatures
         
         // ============ HOSTILE (Danger 100-300) ============
         // Standard combat enemies
-        m.put("Raptor_Cave", "HOSTILE");         // 103 HP, 27 DMG -> 211
-        m.put("Trork_Chieftain", "HOSTILE");     // 124 HP, 35 DMG -> 264
-        m.put("Outlander_Brute", "HOSTILE");     // 124 HP, 35 DMG
-        m.put("Outlander_Berserker", "HOSTILE"); // 103 HP, 27 DMG
-        m.put("Outlander_*", "HOSTILE");         // All outlanders
-        m.put("Trork_*", "HOSTILE");             // All trorks  
-        m.put("Zombie*", "HOSTILE");             // 49-126 HP, 18-30 DMG
-        m.put("Scarak_Broodmother*", "HOSTILE"); // 145 HP, no damage
-        m.put("Scarak_Defender*", "HOSTILE");    // 103 HP
-        m.put("Skeleton_Burnt_*", "HOSTILE");    
-        m.put("Skeleton_Incandescent_*", "HOSTILE");
-        m.put("Skeleton_Pirate_*", "HOSTILE");
-        m.put("Molerat", "HOSTILE");             // 61 HP, 23 DMG
-        m.put("Fen_Stalker", "HOSTILE");         // 74 HP, 29 DMG
-        m.put("Bear_*", "HOSTILE");              // 103-124 HP
-        m.put("Wolf_Black", "HOSTILE");
-        m.put("Wolf_White", "HOSTILE");
-        m.put("Hyena", "HOSTILE");
-        m.put("Shark_*", "HOSTILE");
-        m.put("Snake_Cobra", "HOSTILE");
-        m.put("Scorpion", "HOSTILE");
-        m.put("Spider*", "HOSTILE");
-        m.put("Bison", "HOSTILE");               // 126 HP
-        m.put("Camel", "HOSTILE");               // 126 HP
-        m.put("Horse", "HOSTILE");               // 124 HP, 12 DMG
-        m.put("Ram", "HOSTILE");                 // 124 HP
-        m.put("Cow", "HOSTILE");                 // 103 HP, 9 DMG
-        m.put("Boar", "HOSTILE");                // 81 HP
-        m.put("Warthog", "HOSTILE");
-        m.put("Antelope", "HOSTILE");
-        m.put("Moose_*", "HOSTILE");
-        m.put("Mosshorn*", "HOSTILE");
-        m.put("Deer_Stag", "HOSTILE");
-        m.put("Kweebec_Razorleaf*", "HOSTILE");  // 105 HP
-        m.put("Hedera", "HOSTILE");              // 226 HP
-        m.put("Trillodon", "HOSTILE");           // 145 HP
-        m.put("Snapdragon", "HOSTILE");          // 103 HP
-        m.put("Spirit_Thunder", "HOSTILE");      // 249 HP
-        m.put("Spirit_Ember", "HOSTILE");        // 126 HP
-        m.put("Lizard_Sand", "HOSTILE");
-        m.put("Tortoise", "HOSTILE");
-        m.put("Armadillo", "HOSTILE");
-        m.put("Slug_Magma", "HOSTILE");
+        m.put("Raptor_Cave", "major");         // 103 HP, 27 DMG -> 211
+        m.put("Trork_Chieftain", "champion");     // 124 HP, 35 DMG -> 264
+        m.put("Outlander_Brute", "major");     // 124 HP, 35 DMG
+        m.put("Outlander_Berserker", "major"); // 103 HP, 27 DMG
+        m.put("Outlander_*", "major");         // All outlanders
+        m.put("Trork_*", "major");             // All trorks  
+        m.put("Zombie*", "major");             // 49-126 HP, 18-30 DMG
+        m.put("Scarak_Broodmother*", "major"); // 145 HP, no damage
+        m.put("Scarak_Defender*", "major");    // 103 HP
+        m.put("Skeleton_Burnt_*", "major");    
+        m.put("Skeleton_Incandescent_*", "major");
+        m.put("Skeleton_Pirate_*", "major");
+        m.put("Molerat", "moderate");             // 61 HP, 23 DMG
+        m.put("Fen_Stalker", "moderate");         // 74 HP, 29 DMG
+        m.put("Bear_*", "major");              // 103-124 HP
+        m.put("Wolf_Black", "major");
+        m.put("Wolf_White", "major");
+        m.put("Hyena", "major");
+        m.put("Shark_*", "major");
+        m.put("Snake_Cobra", "major");
+        m.put("Scorpion", "major");
+        m.put("Spider*", "major");
+        m.put("Bison", "major");               // 126 HP
+        m.put("Camel", "major");               // 126 HP
+        m.put("Horse", "major");               // 124 HP, 12 DMG
+        m.put("Ram", "major");                 // 124 HP
+        m.put("Cow", "moderate");                 // 103 HP, 9 DMG
+        m.put("Boar", "moderate");                // 81 HP
+        m.put("Warthog", "moderate");
+        m.put("Antelope", "moderate");
+        m.put("Moose_*", "major");
+        m.put("Mosshorn*", "major");
+        m.put("Deer_Stag", "major");
+        m.put("Kweebec_Razorleaf*", "major");  // 105 HP
+        m.put("Hedera", "major");              // 226 HP
+        m.put("Trillodon", "major");           // 145 HP
+        m.put("Snapdragon", "major");          // 103 HP
+        m.put("Spirit_Thunder", "major");      // 249 HP
+        m.put("Spirit_Ember", "major");        // 126 HP
+        m.put("Lizard_Sand", "moderate");
+        m.put("Tortoise", "moderate");
+        m.put("Armadillo", "moderate");
+        m.put("Slug_Magma", "moderate");
         
         // ============ PASSIVE (Danger 50-100) ============
         // Non-aggressive or weak enemies
-        m.put("Skeleton", "PASSIVE");            // 92 HP
-        m.put("Skeleton_Archer", "PASSIVE");
-        m.put("Skeleton_*", "PASSIVE");          
-        m.put("Scarak_Fighter*", "PASSIVE");     // 81 HP
-        m.put("Scarak_Seeker*", "PASSIVE");      // 61 HP
-        m.put("Dungeon_Scarak_*", "PASSIVE");    
-        m.put("Feran_*", "PASSIVE");             
-        m.put("Kweebec_Sapling*", "PASSIVE");
-        m.put("Kweebec_Rootling", "PASSIVE");
-        m.put("Goblin_Scavenger*", "PASSIVE");   // 54 HP
-        m.put("Goblin_Ogre", "PASSIVE");         // 124 HP but slow
-        m.put("Klops_*", "PASSIVE");             
-        m.put("Sheep", "PASSIVE");
-        m.put("Mouflon", "PASSIVE");
-        m.put("Goat", "PASSIVE");
-        m.put("Deer_Doe", "PASSIVE");
-        m.put("Pig_Wild", "PASSIVE");
-        m.put("Cow_Calf", "PASSIVE");
-        m.put("Camel_Calf", "PASSIVE");
-        m.put("Bison_Calf", "PASSIVE");
-        m.put("Ram_Lamb", "PASSIVE");
-        m.put("Warthog_Piglet", "PASSIVE");
-        m.put("Spirit_Frost", "PASSIVE");
-        m.put("Spirit_Root", "PASSIVE");
-        m.put("Cactee", "PASSIVE");
-        m.put("Spark_Living", "PASSIVE");
-        m.put("Snail_*", "PASSIVE");
-        m.put("Snake_*", "PASSIVE");
-        m.put("Eel_*", "PASSIVE");
-        m.put("Trilobite*", "PASSIVE");
-        m.put("Lobster", "PASSIVE");
-        m.put("Jellyfish_Man_Of_War", "PASSIVE");
-        m.put("Frostgill", "PASSIVE");
-        m.put("Snapjaw", "PASSIVE");
-        m.put("Archaeopteryx", "PASSIVE");
-        m.put("Vulture", "PASSIVE");
-        m.put("Pterodactyl", "PASSIVE");
-        m.put("Wraith_Lantern", "PASSIVE");
-        m.put("Crawler_Void", "PASSIVE");
-        m.put("Eye_Void", "PASSIVE");
-        m.put("Larva_Silk", "PASSIVE");
+        m.put("Skeleton", "minor");            // 92 HP
+        m.put("Skeleton_Archer", "minor");
+        m.put("Skeleton_*", "minor");          
+        m.put("Scarak_Fighter*", "minor");     // 81 HP
+        m.put("Scarak_Seeker*", "minor");      // 61 HP
+        m.put("Dungeon_Scarak_*", "minor");    
+        m.put("Feran_*", "minor");             
+        m.put("Kweebec_Sapling*", "minor");
+        m.put("Kweebec_Rootling", "minor");
+        m.put("Goblin_Scavenger*", "minor");   // 54 HP
+        m.put("Goblin_Ogre", "minor");         // 124 HP but slow
+        m.put("Klops_*", "minor");             
+        m.put("Sheep", "minor");
+        m.put("Mouflon", "minor");
+        m.put("Goat", "minor");
+        m.put("Deer_Doe", "minor");
+        m.put("Pig_Wild", "minor");
+        m.put("Cow_Calf", "minor");
+        m.put("Camel_Calf", "minor");
+        m.put("Bison_Calf", "minor");
+        m.put("Ram_Lamb", "minor");
+        m.put("Warthog_Piglet", "minor");
+        m.put("Spirit_Frost", "minor");
+        m.put("Spirit_Root", "minor");
+        m.put("Cactee", "minor");
+        m.put("Spark_Living", "minor");
+        m.put("Snail_*", "minor");
+        m.put("Snake_*", "minor");
+        m.put("Eel_*", "minor");
+        m.put("Trilobite*", "minor");
+        m.put("Lobster", "minor");
+        m.put("Jellyfish_Man_Of_War", "minor");
+        m.put("Frostgill", "minor");
+        m.put("Snapjaw", "minor");
+        m.put("Archaeopteryx", "minor");
+        m.put("Vulture", "minor");
+        m.put("Pterodactyl", "minor");
+        m.put("Wraith_Lantern", "minor");
+        m.put("Crawler_Void", "minor");
+        m.put("Eye_Void", "minor");
+        m.put("Larva_Silk", "minor");
         
         // ============ CRITTER (Danger 0-50) ============
         // Tiny creatures, babies, passive wildlife
-        m.put("*_Chick", "CRITTER");
-        m.put("*_Cub", "CRITTER");
-        m.put("*_Baby", "CRITTER");
-        m.put("*_Piglet", "CRITTER");
-        m.put("*_Lamb", "CRITTER");
-        m.put("*_Foal", "CRITTER");
-        m.put("*_Kid", "CRITTER");
-        m.put("*_Seedling", "CRITTER");
-        m.put("*_Sproutling", "CRITTER");
-        m.put("Chicken", "CRITTER");
-        m.put("Chicken_Desert", "CRITTER");
-        m.put("Pig", "CRITTER");
-        m.put("Bunny", "CRITTER");
-        m.put("Mouse", "CRITTER");
-        m.put("Squirrel", "CRITTER");
-        m.put("Meerkat", "CRITTER");
-        m.put("Gecko", "CRITTER");
-        m.put("Rat", "CRITTER");
-        m.put("Fox", "CRITTER");
-        m.put("Rabbit", "CRITTER");
-        m.put("Hatworm", "CRITTER");
-        m.put("Frog_*", "CRITTER");
-        m.put("Bat*", "CRITTER");
-        m.put("Skrill*", "CRITTER");
-        m.put("Turkey*", "CRITTER");
-        m.put("Penguin", "CRITTER");
-        m.put("Parrot", "CRITTER");
-        m.put("Owl_*", "CRITTER");
-        m.put("Crow", "CRITTER");
-        m.put("Raven", "CRITTER");
-        m.put("Bluebird", "CRITTER");
-        m.put("Finch_*", "CRITTER");
-        m.put("Sparrow", "CRITTER");
-        m.put("Woodpecker", "CRITTER");
-        m.put("Pigeon", "CRITTER");
-        m.put("Duck", "CRITTER");
-        m.put("Flamingo", "CRITTER");
-        m.put("Hawk", "CRITTER");
-        m.put("Tetrabird", "CRITTER");
-        m.put("Crab", "CRITTER");
-        m.put("Jellyfish_*", "CRITTER");
-        m.put("Pufferfish", "CRITTER");
-        m.put("Clownfish", "CRITTER");
-        m.put("Minnow", "CRITTER");
-        m.put("Tang_*", "CRITTER");
-        m.put("Pike", "CRITTER");
-        m.put("Piranha*", "CRITTER");
-        m.put("Salmon", "CRITTER");
-        m.put("Bluegill", "CRITTER");
-        m.put("Catfish", "CRITTER");
-        m.put("Trout_*", "CRITTER");
-        m.put("Shellfish_*", "CRITTER");
-        m.put("Scarak_Louse", "CRITTER");
-        m.put("Larva_Void", "CRITTER");
-        m.put("Goblin_Hermit", "CRITTER");
-        m.put("Goblin_Miner*", "CRITTER");
-        m.put("Goblin_Scrapper*", "CRITTER");
-        m.put("Goblin_Thief*", "CRITTER");
-        m.put("Goblin_Lobber*", "CRITTER");
-        m.put("Temple_*", "CRITTER");
-        m.put("Snake_Marsh", "CRITTER");
+        m.put("*_Chick", "neutral");
+        m.put("*_Cub", "neutral");
+        m.put("*_Baby", "neutral");
+        m.put("*_Piglet", "neutral");
+        m.put("*_Lamb", "neutral");
+        m.put("*_Foal", "neutral");
+        m.put("*_Kid", "neutral");
+        m.put("*_Seedling", "neutral");
+        m.put("*_Sproutling", "neutral");
+        m.put("Chicken", "neutral");
+        m.put("Chicken_Desert", "neutral");
+        m.put("Pig", "neutral");
+        m.put("Bunny", "neutral");
+        m.put("Mouse", "neutral");
+        m.put("Squirrel", "neutral");
+        m.put("Meerkat", "neutral");
+        m.put("Gecko", "neutral");
+        m.put("Rat", "neutral");
+        m.put("Fox", "neutral");
+        m.put("Rabbit", "neutral");
+        m.put("Hatworm", "neutral");
+        m.put("Frog_*", "neutral");
+        m.put("Bat*", "neutral");
+        m.put("Skrill*", "neutral");
+        m.put("Turkey*", "neutral");
+        m.put("Penguin", "neutral");
+        m.put("Parrot", "neutral");
+        m.put("Owl_*", "neutral");
+        m.put("Crow", "neutral");
+        m.put("Raven", "neutral");
+        m.put("Bluebird", "neutral");
+        m.put("Finch_*", "neutral");
+        m.put("Sparrow", "neutral");
+        m.put("Woodpecker", "neutral");
+        m.put("Pigeon", "neutral");
+        m.put("Duck", "neutral");
+        m.put("Flamingo", "neutral");
+        m.put("Hawk", "neutral");
+        m.put("Tetrabird", "neutral");
+        m.put("Crab", "neutral");
+        m.put("Jellyfish_*", "neutral");
+        m.put("Pufferfish", "neutral");
+        m.put("Clownfish", "neutral");
+        m.put("Minnow", "neutral");
+        m.put("Tang_*", "neutral");
+        m.put("Pike", "neutral");
+        m.put("Piranha*", "neutral");
+        m.put("Salmon", "neutral");
+        m.put("Bluegill", "neutral");
+        m.put("Catfish", "neutral");
+        m.put("Trout_*", "neutral");
+        m.put("Shellfish_*", "neutral");
+        m.put("Scarak_Louse", "neutral");
+        m.put("Larva_Void", "neutral");
+        m.put("Goblin_Hermit", "neutral");
+        m.put("Goblin_Miner*", "neutral");
+        m.put("Goblin_Scrapper*", "neutral");
+        m.put("Goblin_Thief*", "neutral");
+        m.put("Goblin_Lobber*", "neutral");
+        m.put("Temple_*", "neutral");
+        m.put("Snake_Marsh", "neutral");
         
         return m;
     }

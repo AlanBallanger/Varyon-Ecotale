@@ -6,6 +6,7 @@ import fr.varyon.ecotale.economy.events.EcotaleEvents;
 import fr.varyon.ecotale.economy.events.TransactionEvent;
 import fr.varyon.ecotale.economy.storage.H2StorageProvider;
 import fr.varyon.ecotale.economy.storage.JsonStorageProvider;
+import fr.varyon.ecotale.economy.storage.LegacyEcotaleEconomyDataMigrator;
 import fr.varyon.ecotale.economy.storage.MySQLStorageProvider;
 import fr.varyon.ecotale.economy.storage.StorageProvider;
 import fr.varyon.ecotale.economy.systems.BalanceHudSystem;
@@ -17,6 +18,7 @@ import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -95,6 +97,8 @@ public class EconomyManager {
     public EconomyManager(@Nonnull Object plugin) {
         this.logger = HytaleLogger.getLogger().getSubLogger("Ecotale");
         
+        LegacyEcotaleEconomyDataMigrator.migrateIfNeeded(logger);
+
         // Initialize storage provider based on config
         String providerType = VaryonEcotalePlugin.getInstance().getEconomyConfig().getStorageProvider().toLowerCase();
         switch (providerType) {
@@ -185,6 +189,10 @@ public class EconomyManager {
         PlayerBalance balance = cache.get(playerUuid);
         return balance != null ? balance.getBalance() : 0.0;
     }
+
+    public double getBalanceLoadingStorage(@Nonnull UUID playerUuid) {
+        return getOrLoadAccount(playerUuid).getBalance();
+    }
     
     public PlayerBalance getPlayerBalance(@Nonnull UUID playerUuid) {
         return cache.get(playerUuid);
@@ -246,7 +254,14 @@ public class EconomyManager {
         lock.lock();
         try {
             PlayerBalance balance = cache.get(playerUuid);
-            if (balance == null) return false;
+            if (balance == null) {
+                Boolean exists = storage.playerExists(playerUuid).join();
+                if (!Boolean.TRUE.equals(exists)) {
+                    return false;
+                }
+                balance = storage.loadPlayer(playerUuid).join();
+                cache.put(playerUuid, balance);
+            }
             
             double oldBalance = balance.getBalance();
             double newBalance = oldBalance - amount;
@@ -694,6 +709,74 @@ public class EconomyManager {
             return player.getUsername();
         }
         return uuid.toString().substring(0, UUID_PREVIEW_LENGTH) + "...";
+    }
+
+    public String resolveDisplayNameForAdmin(@Nonnull UUID uuid) {
+        PlayerRef online = Universe.get().getPlayer(uuid);
+        if (online != null) {
+            return online.getUsername();
+        }
+        String saved = storage.getSavedDisplayName(uuid).join();
+        if (saved != null && !saved.isBlank()) {
+            return saved;
+        }
+        return uuid.toString().substring(0, UUID_PREVIEW_LENGTH) + "...";
+    }
+
+    public static final class AdminTargetResolve {
+        public final boolean success;
+        public final UUID uuid;
+        public final String displayName;
+        public final String errorMessage;
+
+        private AdminTargetResolve(boolean success, UUID uuid, String displayName, String errorMessage) {
+            this.success = success;
+            this.uuid = uuid;
+            this.displayName = displayName;
+            this.errorMessage = errorMessage;
+        }
+
+        public static AdminTargetResolve ok(UUID uuid, String displayName) {
+            return new AdminTargetResolve(true, uuid, displayName, null);
+        }
+
+        public static AdminTargetResolve fail(String message) {
+            return new AdminTargetResolve(false, null, null, message);
+        }
+    }
+
+    public AdminTargetResolve resolveAdminTargetByName(@Nonnull String rawName) {
+        String name = rawName.trim();
+        if (name.isEmpty()) {
+            return AdminTargetResolve.fail("Player name required.");
+        }
+        String lower = name.toLowerCase(Locale.ROOT);
+        for (PlayerRef pr : Universe.get().getPlayers()) {
+            if (pr.getUsername().equalsIgnoreCase(name)) {
+                return AdminTargetResolve.ok(pr.getUuid(), pr.getUsername());
+            }
+        }
+        List<PlayerRef> onlinePrefix = Universe.get().getPlayers().stream()
+            .filter(pr -> pr.getUsername().toLowerCase(Locale.ROOT).startsWith(lower))
+            .toList();
+        if (onlinePrefix.size() == 1) {
+            PlayerRef pr = onlinePrefix.get(0);
+            return AdminTargetResolve.ok(pr.getUuid(), pr.getUsername());
+        }
+        if (onlinePrefix.size() > 1) {
+            String names = onlinePrefix.stream().map(PlayerRef::getUsername).collect(Collectors.joining(", "));
+            return AdminTargetResolve.fail("Several online players match: " + names);
+        }
+
+        List<UUID> fromDb = storage.findUuidsBySavedPlayerName(name).join();
+        if (fromDb.isEmpty()) {
+            return AdminTargetResolve.fail("Unknown player (offline lookup needs a saved name in the database).");
+        }
+        if (fromDb.size() > 1) {
+            return AdminTargetResolve.fail("Several accounts match that name; use the full exact name.");
+        }
+        UUID u = fromDb.get(0);
+        return AdminTargetResolve.ok(u, resolveDisplayNameForAdmin(u));
     }
     
     // ========== Rate Limiter ==========

@@ -37,7 +37,7 @@ public class CoinsModule implements ModuleInitializer {
         coinConfig.getEnabledCoinsInOrder().forEach((name, cfg) ->
             plugin.getLogger().at(Level.INFO).log("  - " + cfg.displayName + ": " + cfg.value + " base units"));
 
-        Path assetPackPath = plugin.getDataDirectory().getParent().resolve("Varyon_Varyon-Ecotale");
+        Path assetPackPath = plugin.getDataDirectory();
         this.coinAssetManager = new CoinAssetManager(assetPackPath, plugin.getLogger());
         this.coinAssetManager.initialize();
 
@@ -93,4 +93,11 @@ public class CoinsModule implements ModuleInitializer {
     public boolean isEnabled() { return enabled; }
     public CoinConfig getCoinConfig() { return coinConfig; }
     public CoinAssetManager getCoinAssetManager() { return coinAssetManager; }
+
+    public boolean reloadPhysicalCurrency() {
+        if (!enabled || coinConfig == null) {
+            return false;
+        }
+        return coinConfig.load();
+    }
 }

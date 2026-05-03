@@ -1,6 +1,7 @@
 package fr.varyon.ecotale.coins.interaction;
 
 import fr.varyon.ecotale.VaryonEcotalePlugin;
+import fr.varyon.ecotale.coins.BankPermissionHelper;
 import fr.varyon.ecotale.coins.currency.BankManager;
 import fr.varyon.ecotale.coins.currency.CoinType;
 import fr.varyon.ecotale.shared.EconomyBridge;
@@ -73,7 +74,7 @@ public final class EcotaleDepositCoinInteraction extends SimpleInstantInteractio
             return;
         }
 
-        if (!player.hasPermission("ecotale.ecotalecoins.command.bank")) {
+        if (!BankPermissionHelper.canDeposit(player)) {
             context.getState().state = InteractionState.Failed;
             return;
         }
@@ -139,13 +140,17 @@ public final class EcotaleDepositCoinInteraction extends SimpleInstantInteractio
         long bank = BankManager.getBankBalance(playerUuid);
         var plugin = VaryonEcotalePlugin.getInstance();
         var economyConfig = plugin != null ? plugin.getEconomyConfig() : null;
-        String depStr = economyConfig != null ? economyConfig.format((double) value) : String.valueOf(value);
-        String bankStr = economyConfig != null ? economyConfig.format((double) bank) : String.valueOf(bank);
+        String depStr = economyConfig != null
+            ? economyConfig.formatTrailingSymbol((double) value)
+            : value + " Coins";
+        String bankStr = economyConfig != null
+            ? economyConfig.formatTrailingSymbol((double) bank)
+            : bank + " Coins";
         player.sendMessage(Message.join(
             Message.raw(depStr).color(new Color(50, 205, 50)).bold(true),
-            Message.raw(" déposé. ").color(Color.GREEN),
+            Message.raw(" déposé, ").color(Color.GREEN),
             Message.raw(bankStr).color(new Color(50, 205, 50)).bold(true),
-            Message.raw(" total en banque. ").color(Color.GREEN),
+            Message.raw(" au total en banque. ").color(Color.GREEN),
             Message.raw("Tape /bank pour ouvrir ta banque.").color(Color.GRAY)
         ));
     }

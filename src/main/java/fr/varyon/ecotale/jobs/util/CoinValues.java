@@ -25,11 +25,11 @@ public final class CoinValues {
     
     static {
         VALUES.put("COPPER", 1L);
-        VALUES.put("IRON", 10L);
-        VALUES.put("COBALT", 100L);
-        VALUES.put("GOLD", 1_000L);
-        VALUES.put("MITHRIL", 10_000L);
-        VALUES.put("ADAMANTITE", 100_000L);
+        VALUES.put("IRON", 100L);
+        VALUES.put("COBALT", 10_000L);
+        VALUES.put("GOLD", 1_000_000L);
+        VALUES.put("MITHRIL", 100_000_000L);
+        VALUES.put("ADAMANTITE", 10_000_000_000L);
     }
     
     /**

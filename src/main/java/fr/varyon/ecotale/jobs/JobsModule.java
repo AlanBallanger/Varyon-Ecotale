@@ -2,6 +2,7 @@ package fr.varyon.ecotale.jobs;
 
 import fr.varyon.ecotale.jobs.commands.TestOresCommand;
 import fr.varyon.ecotale.jobs.config.CraftingMappingsConfig;
+import fr.varyon.ecotale.jobs.config.EarningsConfigLoader;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig;
 import fr.varyon.ecotale.jobs.config.TierMappingsConfig;
 import fr.varyon.ecotale.jobs.systems.CraftingRewardSystem;
@@ -11,6 +12,7 @@ import fr.varyon.ecotale.jobs.util.CraftingAutoDetector;
 import fr.varyon.ecotale.jobs.util.NPCAutoDetector;
 import fr.varyon.ecotale.jobs.util.RewardNotifier;
 import fr.varyon.ecotale.shared.ModuleInitializer;
+import fr.varyon.ecotale.VaryonEcotalePlugin;
 import com.hypixel.hytale.assetstore.event.LoadedAssetsEvent;
 import com.hypixel.hytale.assetstore.map.DefaultAssetMap;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
@@ -18,12 +20,13 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.util.Config;
 import com.hypixel.hytale.server.npc.AllNPCsLoadedEvent;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.logging.Level;
 
 public class JobsModule implements ModuleInitializer {
 
-    private final EcotaleJobsConfig earningsConfig;
+    private EcotaleJobsConfig earningsConfig;
     private final Config<TierMappingsConfig> tierMappingsConfig;
     private final Config<CraftingMappingsConfig> craftingMappingsConfig;
 
@@ -65,7 +68,8 @@ public class JobsModule implements ModuleInitializer {
         RewardNotifier.configure(
             config.getNotifications().isShowRewards(),
             config.getNotifications().getMinRewardToShow(),
-            null);
+            null,
+            config.getNotifications().isShowMobKillBreakdown());
 
         mobRewardSystem = new MobRewardSystem();
         mobRewardSystem.init(config.getMobKills(), mappings);
@@ -93,6 +97,40 @@ public class JobsModule implements ModuleInitializer {
 
         plugin.getCommandRegistry().registerCommand(new TestOresCommand());
         plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs module loaded.");
+    }
+
+    /**
+     * Hot-reload earnings YAML and JSON mappings; re-applies running reward systems (no server restart).
+     */
+    public void reloadFromDisk(JavaPlugin plugin) {
+        Path earningsPath = plugin.getDataDirectory().resolve("earnings_config.yml");
+        EarningsConfigLoader.installDefaultYamlIfMissing(earningsPath, plugin.getLogger(), VaryonEcotalePlugin.class);
+        this.earningsConfig = EarningsConfigLoader.load(earningsPath, plugin.getLogger());
+
+        tierMappingsConfig.load();
+        craftingMappingsConfig.load();
+
+        EcotaleJobsConfig cfg = this.earningsConfig;
+        RewardNotifier.configure(
+            cfg.getNotifications().isShowRewards(),
+            cfg.getNotifications().getMinRewardToShow(),
+            null,
+            cfg.getNotifications().isShowMobKillBreakdown());
+
+        TierMappingsConfig mappings = tierMappingsConfig.get();
+
+        if (mobRewardSystem != null) {
+            mobRewardSystem.init(cfg.getMobKills(), mappings);
+        }
+        if (miningRewardSystem != null) {
+            miningRewardSystem.init(cfg.getMining());
+        }
+        if (craftingRewardSystem != null) {
+            CraftingMappingsConfig craftMap = craftingMappingsConfig.get();
+            craftingRewardSystem.init(cfg.getCrafting(), craftMap);
+        }
+
+        plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs config reloaded from disk.");
     }
 
     private void onNPCsLoaded(AllNPCsLoadedEvent event) {

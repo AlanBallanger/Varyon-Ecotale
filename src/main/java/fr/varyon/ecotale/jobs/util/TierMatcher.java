@@ -52,7 +52,7 @@ public class TierMatcher {
     private volatile Set<String> exclusions = ConcurrentHashMap.newKeySet();
     
     /** Fallback tier when no match found */
-    private volatile String defaultTier = "HOSTILE";
+    private volatile String defaultTier = "major";
     
     // =========================================================================
     // Initialization
@@ -78,7 +78,7 @@ public class TierMatcher {
         this.cache.clear();
         
         // Set default tier
-        this.defaultTier = (defaultTier != null) ? defaultTier : "HOSTILE";
+        this.defaultTier = (defaultTier != null) ? defaultTier : "major";
         
         // Set exclusions
         this.exclusions = (exclusions != null) 
@@ -121,7 +121,7 @@ public class TierMatcher {
      * O(1) for cached/exact IDs, O(n) for first pattern lookup (then cached).
      * 
      * @param mobId The mob's type ID (e.g., "Trork_Warrior")
-     * @return The tier name (e.g., "HOSTILE", "ELITE", "BOSS", or "NONE" for excluded)
+     * @return The tier name (e.g. neutral, major, elite, boss, or NONE if excluded)
      */
     @Nonnull
     public String findTier(@Nonnull String mobId) {
@@ -200,45 +200,40 @@ public class TierMatcher {
         // === WORLD BOSSES (highest tier) ===
         if (lower.contains("dragon") || lower.contains("titan") || 
             lower.contains("colossus") || lower.contains("ancient_")) {
-            return "WORLDBOSS";
+            return "boss";
         }
         
-        // === BOSSES ===
         if (lower.contains("broodmother") || lower.contains("_boss") ||
             lower.startsWith("boss_") || lower.contains("overlord")) {
-            return "BOSS";
+            return "boss";
         }
         
-        // === MINIBOSSES (named leaders) ===
         if (lower.endsWith("_chieftain") || lower.endsWith("_duke") ||
             lower.endsWith("_king") || lower.endsWith("_queen") ||
             lower.endsWith("_lord") || lower.endsWith("_captain") ||
             lower.endsWith("_champion")) {
-            return "MINIBOSS";
+            return "champion";
         }
         
-        // === ELITE (special variants) ===
         if (lower.endsWith("_elder") || lower.endsWith("_alpha") ||
             lower.endsWith("_knight") || lower.endsWith("_mage") ||
             lower.endsWith("_shaman") || lower.endsWith("_priest") ||
             lower.startsWith("golem_") || lower.contains("_elite")) {
-            return "ELITE";
+            return "elite";
         }
         
-        // === CRITTERS (small creatures, young) ===
         if (lower.endsWith("_cub") || lower.endsWith("_baby") ||
             lower.endsWith("_seedling") || lower.endsWith("_sapling") ||
             lower.endsWith("_hatchling") || lower.endsWith("_pup") ||
             lower.equals("bunny") || lower.equals("mouse") ||
             lower.equals("squirrel") || lower.equals("gecko")) {
-            return "CRITTER";
+            return "neutral";
         }
         
-        // === PASSIVE (farm animals) ===
         if (lower.equals("chicken") || lower.equals("cow") || 
             lower.equals("pig") || lower.equals("sheep") ||
             lower.equals("goat") || lower.equals("horse")) {
-            return "PASSIVE";
+            return "minor";
         }
         
         // No inference possible - will use default

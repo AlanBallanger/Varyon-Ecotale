@@ -1,0 +1,117 @@
+# =============================================================================
+# Varyon-Ecotale — gains jobs (mob / minage / craft)
+# =============================================================================
+# Répartition mob ↔ montants : section MobKills.Tiers ci‑dessous (CoinType COPPER).
+#
+# Ce que tu vois en jeu (ex. pièces de cuivre lâchées) =
+#   valeur en « cuivre » puis conversion automatique (100 cuivre → 1 fer, etc.,
+#   selon coins/config.json ou défaut module pièces).
+#
+# Calcul récompense MOB : tirage [MinCoins, MaxCoins] puis × anti‑farm × VIP × multiplicateur PV Varyon
+# (le même que sur les HP du mob : MobScalingComponent.getHealthMultiplier()). Mets ApplyVaryonHealthScaling
+# à false seulement si tu veux des montants strictement figés sur la table, sans suivre le scaling Varyon.
+# Active DebugMode: true puis consulte les logs jobs pour voir tier / VIP / varyonHp.
+# Notifications.ShowMobKillBreakdown: true affiche dans le chat le détail des gains mob (tier + multiplicateurs).
+#
+# Les clés mob : neutral, minor, moderate, major, elite, champion, boss — dans TierMappings.json.
+# elles doivent correspondre aux entrées MobKills.Tiers ci‑dessous.
+# =============================================================================
+
+DebugMode: false
+
+MobKills:
+  Enabled: true
+  ApplyVaryonHealthScaling: true
+  Security:
+    MaxRewardsPerMinute: 60
+    MaxGlobalInjectionPerHour: 100000000
+    EnableAntiFarm: true
+    AntiFarmThreshold: 15
+    AntiFarmDecayPerKill: 0.08
+  # Référence tier_mapping.toml — valeurs = nombre de pièces « cuivre » (MinCoins–MaxCoins)
+  Tiers:
+    NONE:          { CoinType: COPPER, MinCoins: 0,   MaxCoins: 0,   DropChance: 0 }
+    neutral:       { CoinType: COPPER, MinCoins: 1,   MaxCoins: 4,   DropChance: 100 }
+    minor:         { CoinType: COPPER, MinCoins: 6,   MaxCoins: 10,  DropChance: 100 }
+    moderate:      { CoinType: COPPER, MinCoins: 10,  MaxCoins: 20,  DropChance: 100 }
+    major:         { CoinType: COPPER, MinCoins: 25,  MaxCoins: 40,  DropChance: 100 }
+    elite:         { CoinType: COPPER, MinCoins: 40,  MaxCoins: 60, DropChance: 100 }
+    champion:      { CoinType: COPPER, MinCoins: 80,  MaxCoins: 120, DropChance: 100 }
+    boss:          { CoinType: COPPER, MinCoins: 150, MaxCoins: 300, DropChance: 100 }
+
+Mining:
+  Enabled: true
+  AllowDecoBlocks: false
+  Security:
+    MaxRewardsPerMinute: 60
+    MaxGlobalInjectionPerHour: 100000000
+    EnableAntiFarm: true
+    AntiFarmThreshold: 15
+    AntiFarmDecayPerKill: 0.08
+  Tiers:
+    NONE:      { CoinType: COPPER, MinCoins: 0, MaxCoins: 0, DropChance: 0 }
+    BASIC:     { CoinType: COPPER, MinCoins: 0, MaxCoins: 1, DropChance: 30 }
+    COMMON:    { CoinType: COPPER, MinCoins: 1, MaxCoins: 2, DropChance: 80 }
+    UNCOMMON:  { CoinType: COPPER, MinCoins: 2, MaxCoins: 4, DropChance: 100 }
+    RARE:      { CoinType: COPPER, MinCoins: 4, MaxCoins: 8, DropChance: 100 }
+    EPIC:      { CoinType: IRON,   MinCoins: 1, MaxCoins: 2, DropChance: 100 }
+    LEGENDARY: { CoinType: IRON,   MinCoins: 2, MaxCoins: 4, DropChance: 100 }
+  ToolQualityMultiplier:
+    Enabled: true
+    QualityStep: 0.02
+    MaxBonus: 0.25
+  DepthBonus:
+    Enabled: true
+    MinY: 0
+    MaxY: 80
+    MaxBonus: 0.20
+  VeinStreak:
+    Enabled: true
+    MaxStreak: 6
+    TimeoutMs: 3000
+    BonusEnabled: true
+    BonusStartStreak: 0
+    BonusChanceStep: 10
+    BonusMaxChance: 40
+    BonusCoinAmount: 1
+    AudioEnabled: true
+    SoundEventId: "SFX_Crystal_Break"
+    BasePitchSemitones: -2.0
+    PitchStepSemitones: 2.0
+    MaxPitchSemitones: 6.0
+    Volume: 0.8
+
+Crafting:
+  Enabled: false
+  AntiFarmEnabled: true
+  AntiFarmThreshold: 20
+  AntiFarmDecay: 0.05
+  MaxInjectionPerHour: 50000000
+  Tiers:
+    NONE:      { CoinType: COPPER, MinCoins: 0,  MaxCoins: 0,  DropChance: 0 }
+    TRIVIAL:   { CoinType: COPPER, MinCoins: 0,  MaxCoins: 1,  DropChance: 20 }
+    SIMPLE:    { CoinType: COPPER, MinCoins: 1,  MaxCoins: 2,  DropChance: 60 }
+    BASIC:     { CoinType: COPPER, MinCoins: 2,  MaxCoins: 4,  DropChance: 80 }
+    STANDARD:  { CoinType: COPPER, MinCoins: 4,  MaxCoins: 8,  DropChance: 90 }
+    ADVANCED:  { CoinType: COPPER, MinCoins: 8,  MaxCoins: 15, DropChance: 100 }
+    EXPERT:    { CoinType: COPPER, MinCoins: 15, MaxCoins: 30, DropChance: 100 }
+    MASTER:    { CoinType: COPPER, MinCoins: 30, MaxCoins: 50, DropChance: 100 }
+    LEGENDARY: { CoinType: COPPER, MinCoins: 50, MaxCoins: 90, DropChance: 100 }
+
+Notifications:
+  ShowRewards: true
+  MinRewardToShow: 1
+  # Chat détaillé après kill mob : montant, tier Ecotale, multiplicateurs (anti-farm, VIP, PV Varyon).
+  ShowMobKillBreakdown: false
+
+VipMultipliers:
+  Enabled: true
+  MaxGlobalMultiplier: 5.0
+  Multipliers:
+    vip: 1.20
+    mvp: 1.50
+    mvp_plus: 2.0
+  ChanceBonuses:
+    vip: 5
+    mvp: 10
+    mvp_plus: 15

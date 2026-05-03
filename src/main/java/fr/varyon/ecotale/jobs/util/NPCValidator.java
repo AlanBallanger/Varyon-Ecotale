@@ -143,13 +143,13 @@ public class NPCValidator {
     public static String getTierFromHP(int hp) {
         // Keep the old thresholds for backwards compatibility
         if (hp <= 0) return "UNKNOWN";
-        if (hp <= 50) return "CRITTER";
-        if (hp <= 100) return "PASSIVE";
-        if (hp <= 200) return "HOSTILE";
-        if (hp <= 350) return "ELITE";
-        if (hp <= 600) return "MINIBOSS";
-        if (hp <= 1500) return "BOSS";
-        return "WORLDBOSS";
+        if (hp <= 50) return "neutral";
+        if (hp <= 100) return "minor";
+        if (hp <= 200) return "moderate";
+        if (hp <= 300) return "major";
+        if (hp <= 450) return "elite";
+        if (hp <= 800) return "champion";
+        return "boss";
     }
     
     /**

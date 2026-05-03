@@ -12,6 +12,7 @@ import fr.varyon.ecotale.VaryonEcotalePlugin;
 import fr.varyon.ecotale.jobs.security.AntiFarmSystem;
 import fr.varyon.ecotale.jobs.security.EconomyCap;
 import fr.varyon.ecotale.jobs.util.TierMatcher;
+import fr.varyon.ecotale.jobs.util.RewardNotifier;
 import fr.varyon.ecotale.jobs.util.JobsLogger;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
@@ -23,12 +24,15 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.awt.Color;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -110,12 +114,12 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
             true   // Enabled
         );
         
-        JobsLogger.info("[MobRewardSystem] Initialized: %d tiers, %d mappings, %d exclusions | AntiFarm=%s | VaryonMobHp=%s",
+        JobsLogger.info("[MobRewardSystem] Initialized: %d tiers, %d mappings, %d exclusions | AntiFarm=%s | VaryonHpRewardScale=%s",
             config.getTiers().size(),
             mappings.getTierMappings().size(),
             mappings.getExclusions().size(),
             security.isAntiFarmEnabled() ? "ON" : "OFF",
-            varyonMobScalingBridge.isReflectionReady() ? "ON" : "OFF");
+            config.isApplyVaryonHealthScaling() && varyonMobScalingBridge.isReflectionReady() ? "ON" : "OFF");
     }
     
     // =========================================================================
@@ -319,9 +323,10 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         float vipMultiplier = VaryonEcotalePlugin.getInstance().getJobsModule().getConfig().getVipMultipliers().calculateMultiplier(killer);
 
         float varyonHpMult = 1.0f;
-        if (varyonMobScalingBridge.isReflectionReady()) {
-            float rawHp = varyonMobScalingBridge.readVictimHealthMultiplier(store, mobRef);
-            varyonHpMult = clampVaryonHpMultiplier(rawHp);
+        float rawVaryonHp = Float.NaN;
+        if (config.isApplyVaryonHealthScaling() && varyonMobScalingBridge.isReflectionReady()) {
+            rawVaryonHp = varyonMobScalingBridge.readVictimHealthMultiplier(store, mobRef);
+            varyonHpMult = clampVaryonHpMultiplier(rawVaryonHp);
         }
 
         float exactCoins = baseCoins * antiFarmMultiplier * vipMultiplier * varyonHpMult;
@@ -372,6 +377,12 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         JobsLogger.debug("SUCCESS: %s -> %d coins (exact=%.2f, antiFarm=%.0f%%, vip=%.2fx, varyonHp=%.3fx, mode=%s)",
             mobId, finalCoins, exactCoins, antiFarmMultiplier * 100, vipMultiplier, varyonHpMult,
             CoinsBridge.isAvailable() ? "COINS" : "BALANCE");
+
+        if (RewardNotifier.shouldShowMobKillBreakdown(totalValue)) {
+            sendMobKillBreakdown(killerPlayerRef, mobId, tierName, tier, baseCoins, finalCoins, exactCoins,
+                antiFarmMultiplier, vipMultiplier, varyonHpMult, rawVaryonHp,
+                config.isApplyVaryonHealthScaling(), varyonMobScalingBridge.isReflectionReady());
+        }
     }
     
     // =========================================================================
@@ -436,5 +447,74 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
             return 1.0f;
         }
         return Math.max(VARYON_HP_CLAMP_MIN, Math.min(VARYON_HP_CLAMP_MAX, rawHp));
+    }
+
+    private static void sendMobKillBreakdown(
+        PlayerRef playerRef,
+        String mobId,
+        String tierName,
+        TierConfig tier,
+        int baseCoins,
+        int finalCoins,
+        float exactCoins,
+        float antiFarmMultiplier,
+        float vipMultiplier,
+        float varyonClamped,
+        float rawVaryonHp,
+        boolean scalingEnabled,
+        boolean varyonBridgeReady
+    ) {
+        String coinWord = coinWordFr(tier);
+        String pvPhrase = formatPvPhrase(scalingEnabled, varyonBridgeReady, varyonClamped, rawVaryonHp);
+        String roundingNote = Math.abs(finalCoins - exactCoins) > 0.001f
+            ? String.format(Locale.FRANCE, " · valeur exacte intermédiaire: %.2f", exactCoins)
+            : "";
+
+        playerRef.sendMessage(Message.join(
+            Message.raw("[Ecotale Jobs] ").color(Color.GRAY),
+            Message.raw("+" + finalCoins).color(new Color(50, 205, 50)).bold(true),
+            Message.raw(" " + coinWord).color(Color.WHITE),
+            Message.raw(" · ").color(Color.DARK_GRAY),
+            Message.raw(mobId).color(new Color(200, 200, 200)),
+            Message.raw(" · tier ").color(Color.GRAY),
+            Message.raw(tierName).color(new Color(100, 200, 255))
+        ));
+
+        String detail = String.format(Locale.FRANCE,
+            "Détail: base %d × anti-farm %.0f %% × VIP %s × %s → %d %s%s",
+            baseCoins,
+            antiFarmMultiplier * 100.0,
+            formatMul(vipMultiplier),
+            pvPhrase,
+            finalCoins,
+            coinWord,
+            roundingNote);
+        playerRef.sendMessage(Message.raw(detail).color(Color.GRAY));
+    }
+
+    private static String coinWordFr(TierConfig tier) {
+        String n = tier.getCoinTypeName();
+        return "COPPER".equalsIgnoreCase(n) ? "cuivre" : n.toLowerCase(Locale.ROOT);
+    }
+
+    private static String formatMul(float f) {
+        return String.format(Locale.FRANCE, "×%.2f", f);
+    }
+
+    private static String formatPvPhrase(boolean scalingEnabled, boolean bridgeReady, float clamped, float raw) {
+        if (!scalingEnabled) {
+            return "PV ×1,00 (échelle PV désactivée)";
+        }
+        if (!bridgeReady) {
+            return "PV ×1,00 (composant Varyon indisponible)";
+        }
+        if (!(raw > 0) || !Float.isFinite(raw)) {
+            return String.format(Locale.FRANCE, "PV %s (lecture invalide)", formatMul(clamped));
+        }
+        if (Math.abs(clamped - raw) <= 0.001f) {
+            return String.format(Locale.FRANCE, "PV %s", formatMul(clamped));
+        }
+        return String.format(Locale.FRANCE, "PV %s (brut %s, plage %.2f–%.2f)",
+            formatMul(clamped), formatMul(raw), VARYON_HP_CLAMP_MIN, VARYON_HP_CLAMP_MAX);
     }
 }

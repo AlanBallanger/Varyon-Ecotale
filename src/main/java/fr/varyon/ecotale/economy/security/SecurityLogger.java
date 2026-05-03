@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -19,14 +21,13 @@ import java.util.logging.Level;
 /**
  * Security Logger for unauthorized access attempts.
  * 
- * Logs to dedicated file: mods/Ecotale/security_alerts.log
+ * Logs under plugin data directory: {@code security_alerts.log}
  * 
  * These alerts should NEVER have false positives - they indicate
  * a client attempting to bypass permission checks.
  */
 public class SecurityLogger {
-    
-    private static final String LOG_FILE = "mods/Ecotale/security_alerts.log";
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     
     private static SecurityLogger instance;
@@ -56,12 +57,12 @@ public class SecurityLogger {
     
     private void initLogFile() {
         try {
-            logFile = new File(LOG_FILE);
-            logFile.getParentFile().mkdirs();
-            
-            if (!logFile.exists()) {
-                logFile.createNewFile();
-                // Write header
+            Path dir = plugin.getDataDirectory();
+            Files.createDirectories(dir);
+            Path p = dir.resolve("security_alerts.log");
+            logFile = p.toFile();
+            if (!Files.exists(p)) {
+                Files.createFile(p);
                 try (PrintWriter writer = new PrintWriter(new FileWriter(logFile, true))) {
                     writer.println("# Ecotale Security Alerts");
                     writer.println("# These indicate potential hack attempts - NO FALSE POSITIVES EXPECTED");

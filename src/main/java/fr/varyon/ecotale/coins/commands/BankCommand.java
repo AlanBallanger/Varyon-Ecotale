@@ -1,5 +1,6 @@
 package fr.varyon.ecotale.coins.commands;
 
+import fr.varyon.ecotale.coins.BankPermissionHelper;
 import fr.varyon.ecotale.coins.currency.BankManager;
 import fr.varyon.ecotale.coins.currency.CoinManager;
 import fr.varyon.ecotale.coins.transaction.SecureTransaction;
@@ -66,7 +67,7 @@ public class BankCommand extends AbstractAsyncCommand {
         }
 
         // Strict permission check
-        if (!player.hasPermission("ecotale.ecotalecoins.command.bank")) {
+        if (!BankPermissionHelper.canUseBankUi(player)) {
             CompletableFuture<Void> denied = new CompletableFuture<>();
             world.execute(() -> {
                 ctx.sendMessage(Message.raw("You don't have permission to use the bank.").color(Color.RED));
@@ -115,8 +116,7 @@ public class BankCommand extends AbstractAsyncCommand {
                 return CompletableFuture.completedFuture(null);
             }
 
-            // Permission check
-            if (!player.hasPermission("ecotale.ecotalecoins.command.bank")) {
+            if (!BankPermissionHelper.canDeposit(player)) {
                 CompletableFuture<Void> denied = new CompletableFuture<>();
                 world.execute(() -> {
                     ctx.sendMessage(Message.raw("You don't have permission to use the bank.").color(Color.RED));
@@ -207,8 +207,7 @@ public class BankCommand extends AbstractAsyncCommand {
                 return CompletableFuture.completedFuture(null);
             }
 
-            // Permission check
-            if (!player.hasPermission("ecotale.ecotalecoins.command.bank")) {
+            if (!BankPermissionHelper.canWithdraw(player)) {
                 CompletableFuture<Void> denied = new CompletableFuture<>();
                 world.execute(() -> {
                     ctx.sendMessage(Message.raw("You don't have permission to use the bank.").color(Color.RED));

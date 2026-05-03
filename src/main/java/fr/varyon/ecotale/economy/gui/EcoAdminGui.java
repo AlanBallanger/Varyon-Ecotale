@@ -386,8 +386,7 @@ public class EcoAdminGui extends InteractiveCustomUIPage<EcoAdminGui.AdminGuiDat
                 }
                 // Config actions
                 case "ReloadConfig" -> {
-                    VaryonEcotalePlugin.getInstance().economyConfig.load();
-                    fr.varyon.ecotale.economy.util.TranslationHelper.invalidateCache(); // Invalidate translation cache
+                    VaryonEcotalePlugin.getInstance().reloadConfigurationFromDisk();
                     playerRef.sendMessage(Message.raw("Configuration reloaded!").color(Color.GREEN));
                     refreshUI(ref, store);
                     return;

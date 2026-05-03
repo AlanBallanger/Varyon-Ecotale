@@ -27,12 +27,13 @@ import java.util.concurrent.CompletableFuture;
  * Economy admin commands for managing and testing balances.
  * 
  * Commands:
- * - /eco set <amount> - Set your balance
- * - /eco give <amount> - Add to your balance
- * - /eco take <amount> - Remove from your balance  
+ * - /eco set <player> <amount> - Set a player's balance
+ * - /eco give <player> <amount> - Add to a player's balance
+ * - /eco take <player> <amount> - Remove from a player's balance
  * - /eco reset - Reset to starting balance
  * - /eco top - Show top balances
  * - /eco save - Force save data
+ * - /eco reload - Hot-reload config files from disk
  */
 public class EcoAdminCommand extends AbstractAsyncCommand {
     
@@ -47,6 +48,7 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
         this.addSubCommand(new EcoResetCommand());
         this.addSubCommand(new EcoTopCommand());
         this.addSubCommand(new EcoSaveCommand());
+        this.addSubCommand(new EcoReloadCommand());
         this.addSubCommand(new EcoHudCommand());
         this.addSubCommand(new EcoMetricsCommand());
     }
@@ -79,25 +81,28 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
         
         // Fallback: show help text
         commandContext.sender().sendMessage(Message.raw("=== Ecotale Economy Admin ===").color(new Color(255, 215, 0)));
-        commandContext.sender().sendMessage(Message.raw("  /eco set <amount> - Set your balance").color(Color.GRAY));
-        commandContext.sender().sendMessage(Message.raw("  /eco give <amount> - Add to balance").color(Color.GRAY));
-        commandContext.sender().sendMessage(Message.raw("  /eco take <amount> - Remove from balance").color(Color.GRAY));
+        commandContext.sender().sendMessage(Message.raw("  /eco set <player> <amount> - Set player's balance").color(Color.GRAY));
+        commandContext.sender().sendMessage(Message.raw("  /eco give <player> <amount> - Add to player's balance").color(Color.GRAY));
+        commandContext.sender().sendMessage(Message.raw("  /eco take <player> <amount> - Remove from player's balance").color(Color.GRAY));
         commandContext.sender().sendMessage(Message.raw("  /eco reset - Reset to starting balance").color(Color.GRAY));
         commandContext.sender().sendMessage(Message.raw("  /eco top - Show top balances").color(Color.GRAY));
         commandContext.sender().sendMessage(Message.raw("  /eco metrics - Show performance stats").color(Color.GRAY));
         commandContext.sender().sendMessage(Message.raw("  /eco save - Force save data").color(Color.GRAY));
+        commandContext.sender().sendMessage(Message.raw("  /eco reload - Reload configs from disk (jobs, coins, mappings)").color(Color.GRAY));
         return CompletableFuture.completedFuture(null);
     }
     
     // ========== SET COMMAND ==========
     private static class EcoSetCommand extends AbstractAsyncCommand {
+        private final RequiredArg<String> playerNameArg;
         private final RequiredArg<Double> amountArg;
-        
+
         public EcoSetCommand() {
-            super("set", "Set your balance to a specific amount");
+            super("set", "Set a player's balance to a specific amount");
+            this.playerNameArg = this.withRequiredArg("player", "Player name (online or offline if stored)", ArgTypes.STRING);
             this.amountArg = this.withRequiredArg("amount", "The amount to set", ArgTypes.DOUBLE);
         }
-        
+
         @NonNullDecl
         @Override
         protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
@@ -106,29 +111,36 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                 ctx.sendMessage(Message.raw("This command can only be used by players").color(Color.RED));
                 return CompletableFuture.completedFuture(null);
             }
-            
+
+            String playerName = playerNameArg.get(ctx);
             Double amount = amountArg.get(ctx);
             if (amount == null || amount < 0) {
                 ctx.sendMessage(Message.raw("Amount must be positive").color(Color.RED));
                 return CompletableFuture.completedFuture(null);
             }
-            
+
             var ref = player.getReference();
             if (ref == null || !ref.isValid()) return CompletableFuture.completedFuture(null);
-            
+
             var store = ref.getStore();
             var world = store.getExternalData().getWorld();
-            
+
             return CompletableFuture.runAsync(() -> {
-                PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
-                if (playerRef == null) return;
-                
-                double oldBalance = VaryonEcotalePlugin.getInstance().getEconomyManager().getBalance(playerRef.getUuid());
-                VaryonEcotalePlugin.getInstance().getEconomyManager().setBalance(playerRef.getUuid(), amount, "Admin set");
-                updateHud(playerRef.getUuid(), amount);
-                
+                var resolved = VaryonEcotalePlugin.getInstance().getEconomyManager().resolveAdminTargetByName(playerName);
+                if (!resolved.success) {
+                    player.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
+                    return;
+                }
+                UUID targetUuid = resolved.uuid;
+                var economyManager = VaryonEcotalePlugin.getInstance().getEconomyManager();
+                double oldBalance = economyManager.getBalanceLoadingStorage(targetUuid);
+                economyManager.setBalance(targetUuid, amount, "Admin set");
+                updateHud(targetUuid, amount);
+
                 player.sendMessage(Message.join(
-                    Message.raw("Balance set: ").color(Color.GREEN),
+                    Message.raw("Set ").color(Color.GREEN),
+                    Message.raw(resolved.displayName).color(Color.WHITE),
+                    Message.raw(": ").color(Color.GRAY),
                     Message.raw(VaryonEcotalePlugin.getInstance().getEconomyConfig().format(oldBalance)).color(Color.GRAY),
                     Message.raw(" -> ").color(Color.WHITE),
                     Message.raw(VaryonEcotalePlugin.getInstance().getEconomyConfig().format(amount)).color(new Color(50, 205, 50))
@@ -139,14 +151,16 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
     
     // ========== GIVE COMMAND ==========
     private static class EcoGiveCommand extends AbstractAsyncCommand {
+        private final RequiredArg<String> playerNameArg;
         private final RequiredArg<Double> amountArg;
-        
+
         public EcoGiveCommand() {
-            super("give", "Add money to your balance");
+            super("give", "Add money to a player's balance");
             this.addAliases("add");
+            this.playerNameArg = this.withRequiredArg("player", "Player name (online or offline if stored)", ArgTypes.STRING);
             this.amountArg = this.withRequiredArg("amount", "The amount to add", ArgTypes.DOUBLE);
         }
-        
+
         @NonNullDecl
         @Override
         protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
@@ -155,33 +169,39 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                 ctx.sendMessage(Message.raw("This command can only be used by players").color(Color.RED));
                 return CompletableFuture.completedFuture(null);
             }
-            
+
+            String playerName = playerNameArg.get(ctx);
+
             Double amount = amountArg.get(ctx);
             if (amount == null || amount <= 0) {
                 ctx.sendMessage(Message.raw("Amount must be positive").color(Color.RED));
                 return CompletableFuture.completedFuture(null);
             }
-            
+
             var ref = player.getReference();
             if (ref == null || !ref.isValid()) {
                 return CompletableFuture.completedFuture(null);
             }
-            
+
             var store = ref.getStore();
             var world = store.getExternalData().getWorld();
-            
-            // Run on world thread to avoid threading issues
+
             return CompletableFuture.runAsync(() -> {
-                PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
-                if (playerRef == null) return;
-                
-                VaryonEcotalePlugin.getInstance().getEconomyManager().deposit(playerRef.getUuid(), amount, "Admin give");
-                double newBalance = VaryonEcotalePlugin.getInstance().getEconomyManager().getBalance(playerRef.getUuid());
-                updateHud(playerRef.getUuid(), newBalance);
-                
+                var resolved = VaryonEcotalePlugin.getInstance().getEconomyManager().resolveAdminTargetByName(playerName);
+                if (!resolved.success) {
+                    player.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
+                    return;
+                }
+                UUID targetUuid = resolved.uuid;
+                VaryonEcotalePlugin.getInstance().getEconomyManager().deposit(targetUuid, amount, "Admin give");
+                double newBalance = VaryonEcotalePlugin.getInstance().getEconomyManager().getBalance(targetUuid);
+                updateHud(targetUuid, newBalance);
+
                 player.sendMessage(Message.join(
                     Message.raw("Added ").color(Color.GREEN),
                     Message.raw("+" + VaryonEcotalePlugin.getInstance().getEconomyConfig().format(amount)).color(new Color(50, 205, 50)),
+                    Message.raw(" to ").color(Color.GRAY),
+                    Message.raw(resolved.displayName).color(Color.WHITE),
                     Message.raw(" | New balance: ").color(Color.GRAY),
                     Message.raw(VaryonEcotalePlugin.getInstance().getEconomyConfig().format(newBalance)).color(Color.WHITE)
                 ));
@@ -191,14 +211,16 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
     
     // ========== TAKE COMMAND ==========
     private static class EcoTakeCommand extends AbstractAsyncCommand {
+        private final RequiredArg<String> playerNameArg;
         private final RequiredArg<Double> amountArg;
-        
+
         public EcoTakeCommand() {
-            super("take", "Remove money from your balance");
+            super("take", "Remove money from a player's balance");
             this.addAliases("remove");
+            this.playerNameArg = this.withRequiredArg("player", "Player name (online or offline if stored)", ArgTypes.STRING);
             this.amountArg = this.withRequiredArg("amount", "The amount to remove", ArgTypes.DOUBLE);
         }
-        
+
         @NonNullDecl
         @Override
         protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
@@ -207,36 +229,46 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                 ctx.sendMessage(Message.raw("This command can only be used by players").color(Color.RED));
                 return CompletableFuture.completedFuture(null);
             }
-            
+
+            String playerName = playerNameArg.get(ctx);
+
             Double amount = amountArg.get(ctx);
             if (amount == null || amount <= 0) {
                 ctx.sendMessage(Message.raw("Amount must be positive").color(Color.RED));
                 return CompletableFuture.completedFuture(null);
             }
-            
+
             var ref = player.getReference();
             if (ref == null || !ref.isValid()) return CompletableFuture.completedFuture(null);
-            
+
             var store = ref.getStore();
             var world = store.getExternalData().getWorld();
-            
+
             return CompletableFuture.runAsync(() -> {
-                PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
-                if (playerRef == null) return;
-                
-                boolean success = VaryonEcotalePlugin.getInstance().getEconomyManager().withdraw(playerRef.getUuid(), amount, "Admin take");
-                double newBalance = VaryonEcotalePlugin.getInstance().getEconomyManager().getBalance(playerRef.getUuid());
-                updateHud(playerRef.getUuid(), newBalance);
-                
+                var resolved = VaryonEcotalePlugin.getInstance().getEconomyManager().resolveAdminTargetByName(playerName);
+                if (!resolved.success) {
+                    player.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
+                    return;
+                }
+                UUID targetUuid = resolved.uuid;
+                boolean success = VaryonEcotalePlugin.getInstance().getEconomyManager().withdraw(targetUuid, amount, "Admin take");
+                double newBalance = VaryonEcotalePlugin.getInstance().getEconomyManager().getBalance(targetUuid);
+                updateHud(targetUuid, newBalance);
+
                 if (success) {
                     player.sendMessage(Message.join(
                         Message.raw("Removed ").color(Color.YELLOW),
                         Message.raw("-" + VaryonEcotalePlugin.getInstance().getEconomyConfig().format(amount)).color(new Color(255, 99, 71)),
+                        Message.raw(" from ").color(Color.GRAY),
+                        Message.raw(resolved.displayName).color(Color.WHITE),
                         Message.raw(" | New balance: ").color(Color.GRAY),
                         Message.raw(VaryonEcotalePlugin.getInstance().getEconomyConfig().format(newBalance)).color(Color.WHITE)
                     ));
                 } else {
-                    player.sendMessage(Message.raw("Insufficient funds").color(Color.RED));
+                    player.sendMessage(Message.join(
+                        Message.raw("Insufficient funds or no account for ").color(Color.RED),
+                        Message.raw(resolved.displayName).color(Color.WHITE)
+                    ));
                 }
             }, world);
         }
@@ -350,6 +382,22 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
         }
     }
     
+    private static class EcoReloadCommand extends AbstractAsyncCommand {
+        public EcoReloadCommand() {
+            super("reload", "Reload economy and jobs configs from disk");
+            this.addAliases("rl", "hotreload");
+        }
+
+        @NonNullDecl
+        @Override
+        protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
+            VaryonEcotalePlugin.getInstance().reloadConfigurationFromDisk();
+            ctx.sendMessage(Message.raw("Configuration reloaded from disk (config, mappings, earnings, coins). HUD refreshed.")
+                .color(Color.GREEN));
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
     // ========== HUD COMMAND ==========
     private static class EcoHudCommand extends AbstractAsyncCommand {
         public EcoHudCommand() {
