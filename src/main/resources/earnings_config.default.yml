@@ -40,7 +40,7 @@ MobKills:
     boss:          { CoinType: COPPER, MinCoins: 150, MaxCoins: 300, DropChance: 100 }
 
 Mining:
-  Enabled: true
+  Enabled: false
   AllowDecoBlocks: false
   Security:
     MaxRewardsPerMinute: 60

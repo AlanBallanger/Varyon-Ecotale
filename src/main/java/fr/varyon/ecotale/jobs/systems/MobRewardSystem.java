@@ -57,7 +57,10 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
     private final AntiFarmSystem antiFarm = new AntiFarmSystem();
     private final EconomyCap economyCap = new EconomyCap();
     private final RateLimiter rateLimiter;
-    
+
+    @Nullable
+    private final MobLastAttackerSystem lastAttackerSystem;
+
     // Cached exclusions for O(1) lookup - populated on init()
     private volatile Set<String> exclusionSet = new HashSet<>();
     
@@ -65,11 +68,12 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
     private final AtomicLong totalRewardsGiven = new AtomicLong(0);
     private final AtomicLong totalValueInjected = new AtomicLong(0);
     private final AtomicLong rewardsBlocked = new AtomicLong(0);
-    
-    public MobRewardSystem() {
+
+    public MobRewardSystem(@Nullable MobLastAttackerSystem lastAttackerSystem) {
         // RateLimiter: 30 burst capacity, 5 tokens/sec refill
         // This allows 30 rapid kills, then ~5 kills/sec sustained
         this.rateLimiter = new RateLimiter(30, 5);
+        this.lastAttackerSystem = lastAttackerSystem;
     }
     
     /**
@@ -154,51 +158,53 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         NPCEntity npc = store.getComponent(ref, NPCEntity.getComponentType());
         
         if (npc == null) {
-            // Not an NPC death - ignore (shouldn't happen due to query)
             return;
         }
         
         String mobId = npc.getNPCTypeId();
-        
-        // Debug logging for all NPC deaths
+
         JobsLogger.debug("=== NPC DEATH: %s ===", mobId != null ? mobId : "NULL_ID");
-        
-        // Guard: System disabled
+
+        // Always clean up last-attacker entry to prevent memory leaks
+        MobLastAttackerSystem.AttackerEntry lastAttackerEntry =
+            lastAttackerSystem != null ? lastAttackerSystem.removeAndGet(ref) : null;
+
         if (config == null || !config.isEnabled()) {
             JobsLogger.debug("SKIP: Config null or disabled");
             return;
         }
-        
-        // Get the killer from DeathComponent's damage info
+
+        // Primary: killer from DeathComponent (final blow)
+        Player killer = null;
+        PlayerRef killerPlayerRef = null;
+
         Damage deathInfo = deathComponent.getDeathInfo();
-        if (deathInfo == null) {
-            JobsLogger.debug("SKIP: No death info (natural death?)");
-            return;
+        if (deathInfo != null) {
+            Damage.Source source = deathInfo.getSource();
+            if (source instanceof Damage.EntitySource entitySource) {
+                Ref<EntityStore> killerRef = entitySource.getRef();
+                if (killerRef != null && killerRef.isValid()) {
+                    killer = store.getComponent(killerRef, Player.getComponentType());
+                    killerPlayerRef = store.getComponent(killerRef, PlayerRef.getComponentType());
+                }
+            }
         }
-        
-        // Check if the damage source was an entity
-        Damage.Source source = deathInfo.getSource();
-        if (!(source instanceof Damage.EntitySource entitySource)) {
-            JobsLogger.debug("SKIP: Damage source is not an entity (environmental?)");
-            return;
+
+        // Fallback: last player who hit the mob (even if not the killer)
+        if ((killer == null || killerPlayerRef == null) && lastAttackerEntry != null
+                && lastAttackerEntry.attackerRef().isValid()) {
+            killer = store.getComponent(lastAttackerEntry.attackerRef(), Player.getComponentType());
+            killerPlayerRef = store.getComponent(lastAttackerEntry.attackerRef(), PlayerRef.getComponentType());
+            if (killer != null && killerPlayerRef != null) {
+                JobsLogger.debug("Using last attacker fallback for %s", mobId);
+            }
         }
-        
-        Ref<EntityStore> killerRef = entitySource.getRef();
-        if (killerRef == null || !killerRef.isValid()) {
-            JobsLogger.debug("SKIP: Killer ref is null or invalid");
-            return;
-        }
-        
-        // Verify killer is a player (not another NPC)
-        Player killer = store.getComponent(killerRef, Player.getComponentType());
-        PlayerRef killerPlayerRef = store.getComponent(killerRef, PlayerRef.getComponentType());
-        
+
         if (killer == null || killerPlayerRef == null) {
-            JobsLogger.debug("SKIP: Killer is not a player");
+            JobsLogger.debug("SKIP: No player killer for %s", mobId);
             return;
         }
-        
-        // Process the reward through security layers
+
         processKill(killer, killerPlayerRef, npc, ref, store, commandBuffer);
     }
 

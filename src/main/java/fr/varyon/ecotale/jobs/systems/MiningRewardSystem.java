@@ -39,6 +39,7 @@ import com.hypixel.hytale.protocol.SoundCategory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
@@ -375,8 +376,14 @@ public class MiningRewardSystem extends EntityEventSystem<EntityStore, BreakBloc
         // Valid: "Rock_Iron_Ore", "Gold_Ore", etc.
         // Blocked: "Iron_Bars", "Gold_Block", "Rock_Stone", etc.
         // ══════════════════════════════════════════════════════════════════════════════
-        if (!blockId.contains("Ore")) {
+        String lowerBlockId = blockId.toLowerCase(Locale.ROOT);
+        if (!lowerBlockId.contains("ore")) {
             JobsLogger.debug("[MINING-SECURITY] Blocked non-ore block: %s", blockId);
+            return "NONE";
+        }
+
+        if (lowerBlockId.contains("cracked")) {
+            JobsLogger.debug("[MINING-SECURITY] Blocked cracked ore block: %s", blockId);
             return "NONE";
         }
         

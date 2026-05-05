@@ -197,7 +197,7 @@ public class EcotaleJobsConfig {
                 (c, v, e) -> c.veinStreak = v, (c, e) -> c.veinStreak).add()
             .build();
         
-        private boolean enabled = true;
+        private boolean enabled = false;
         private boolean allowDecoBlocks = false; // If true, rewards player-placed blocks (for testing)
         private Map<String, TierConfig> tiers = createDefaultMiningTiers();
         private SecurityConfig security = new SecurityConfig();

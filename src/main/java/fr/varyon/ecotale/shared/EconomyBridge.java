@@ -44,6 +44,7 @@ public final class EconomyBridge {
     public static String getCurrencySymbol() { return cfg().getCurrencySymbol(); }
     public static String getHudPrefix() { return cfg().getHudPrefix(); }
     public static String format(double amt) { return cfg().format(amt); }
+    public static String formatAmountOnly(double amt) { return cfg().formatAmountOnly(amt); }
     public static String getLanguage() { return cfg().getLanguage(); }
     public static boolean isUsePlayerLanguage() { return cfg().isUsePlayerLanguage(); }
     public static double getMaxBalance() { return cfg().getMaxBalance(); }

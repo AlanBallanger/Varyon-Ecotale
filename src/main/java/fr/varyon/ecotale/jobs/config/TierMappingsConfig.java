@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class TierMappingsConfig {
     
-    public static final int CURRENT_VERSION = 3;
+    public static final int CURRENT_VERSION = 4;
     
     public static final BuilderCodec<TierMappingsConfig> CODEC = BuilderCodec.builder(TierMappingsConfig.class, TierMappingsConfig::new)
         .append(new KeyedCodec<>("Version", Codec.INTEGER),
@@ -42,18 +42,19 @@ public class TierMappingsConfig {
     public List<String> getExclusions() { return exclusions; }
     public String getDefaultTier() { return defaultTier; }
     
-    /**
-     * Safely add a mapping, handling potentially immutable maps from codec deserialization.
-     * If the internal map is immutable, it will be replaced with a mutable copy.
-     */
-    public void addMapping(String mobName, String tier) {
+    private void ensureTierMappingsMutable() {
         try {
-            tierMappings.put(mobName, tier);
+            String k = "\0__tier_mappings_mut_probe";
+            tierMappings.put(k, "");
+            tierMappings.remove(k);
         } catch (UnsupportedOperationException e) {
-            // Map was deserialized as immutable, replace with mutable copy
-            tierMappings = new HashMap<>(tierMappings);
-            tierMappings.put(mobName, tier);
+            tierMappings = new LinkedHashMap<>(tierMappings);
         }
+    }
+
+    public void addMapping(String mobName, String tier) {
+        ensureTierMappingsMutable();
+        tierMappings.put(mobName, tier);
     }
     
     /**
@@ -66,9 +67,11 @@ public class TierMappingsConfig {
             return 0;
         }
         
+        ensureTierMappingsMutable();
+
         Map<String, String> defaults = createDefaultMappings();
         int added = 0;
-        
+
         for (Map.Entry<String, String> entry : defaults.entrySet()) {
             if (!tierMappings.containsKey(entry.getKey())) {
                 tierMappings.put(entry.getKey(), entry.getValue());
@@ -212,6 +215,10 @@ public class TierMappingsConfig {
         m.put("Warthog_Piglet", "minor");
         m.put("Spirit_Frost", "minor");
         m.put("Spirit_Root", "minor");
+        m.put("Endgame_Rat_Frost", "minor");
+        m.put("endgame_rat_frost", "minor");
+        m.put("Endgame_Toad_Frost", "major");
+        m.put("endgame_toad_frost", "major");
         m.put("Cactee", "minor");
         m.put("Spark_Living", "minor");
         m.put("Snail_*", "minor");

@@ -2,96 +2,62 @@ package fr.varyon.ecotale.jobs.util;
 
 import fr.varyon.ecotale.VaryonEcotalePlugin;
 
-/**
- * Conditional logging utility for EcotaleJobs.
- * 
- * Only logs when DebugMode is enabled in config.
- * Warnings and errors are always logged regardless of debug mode.
- */
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public final class JobsLogger {
-    
-    private static final String PREFIX = "[EcotaleJobs] ";
-    
+
+    private static final Logger LOGGER = Logger.getLogger("EcotaleJobs");
+
     private JobsLogger() {}
-    
-    /**
-     * Check if debug mode is enabled in config.
-     */
+
     public static boolean isDebugEnabled() {
         try {
             VaryonEcotalePlugin p = VaryonEcotalePlugin.getInstance();
             return p != null && p.getJobsModule() != null && p.getJobsModule().getConfig().isDebugMode();
         } catch (Exception e) {
-            return false; // Default to no debug in production
+            return false;
         }
     }
-    
-    /**
-     * Log a debug message (only if DebugMode is enabled in config).
-     */
+
     public static void debug(String message) {
         if (isDebugEnabled()) {
-            System.out.println(PREFIX + message);
+            LOGGER.log(Level.INFO, message);
         }
     }
-    
-    /**
-     * Log a debug message with format (only if DebugMode is enabled in config).
-     */
+
     public static void debug(String format, Object... args) {
         if (isDebugEnabled()) {
-            System.out.println(PREFIX + String.format(format, args));
+            LOGGER.log(Level.INFO, String.format(format, args));
         }
     }
-    
-    /**
-     * Log an info message (always logged).
-     */
+
     public static void info(String message) {
-        System.out.println(PREFIX + message);
+        LOGGER.log(Level.INFO, message);
     }
-    
-    /**
-     * Log an info message with format (always logged).
-     */
+
     public static void info(String format, Object... args) {
-        System.out.println(PREFIX + String.format(format, args));
+        LOGGER.log(Level.INFO, String.format(format, args));
     }
-    
-    /**
-     * Log a warning (always logged).
-     */
+
     public static void warn(String message) {
-        System.out.println(PREFIX + "WARNING: " + message);
+        LOGGER.log(Level.WARNING, message);
     }
-    
-    /**
-     * Log a warning with format (always logged).
-     */
+
     public static void warn(String format, Object... args) {
-        System.out.println(PREFIX + "WARNING: " + String.format(format, args));
+        LOGGER.log(Level.WARNING, String.format(format, args));
     }
-    
-    /**
-     * Log an error (always logged).
-     */
+
     public static void error(String message) {
-        System.err.println(PREFIX + "ERROR: " + message);
+        LOGGER.log(Level.SEVERE, message);
     }
-    
-    /**
-     * Log an error with format (always logged).
-     */
+
     public static void error(String format, Object... args) {
-        System.err.println(PREFIX + "ERROR: " + String.format(format, args));
+        LOGGER.log(Level.SEVERE, String.format(format, args));
     }
-    
-    /**
-     * Log an error with exception (always logged).
-     */
+
     public static void error(String message, Throwable t) {
-        System.err.println(PREFIX + "ERROR: " + message);
-        t.printStackTrace();
+        LOGGER.log(Level.SEVERE, message, t);
     }
 }
 

@@ -5,17 +5,12 @@ import fr.varyon.ecotale.jobs.config.CraftingMappingsConfig;
 import fr.varyon.ecotale.jobs.config.EarningsConfigLoader;
 import fr.varyon.ecotale.jobs.config.EcotaleJobsConfig;
 import fr.varyon.ecotale.jobs.config.TierMappingsConfig;
-import fr.varyon.ecotale.jobs.systems.CraftingRewardSystem;
-import fr.varyon.ecotale.jobs.systems.MiningRewardSystem;
+import fr.varyon.ecotale.jobs.systems.MobLastAttackerSystem;
 import fr.varyon.ecotale.jobs.systems.MobRewardSystem;
-import fr.varyon.ecotale.jobs.util.CraftingAutoDetector;
 import fr.varyon.ecotale.jobs.util.NPCAutoDetector;
 import fr.varyon.ecotale.jobs.util.RewardNotifier;
 import fr.varyon.ecotale.shared.ModuleInitializer;
 import fr.varyon.ecotale.VaryonEcotalePlugin;
-import com.hypixel.hytale.assetstore.event.LoadedAssetsEvent;
-import com.hypixel.hytale.assetstore.map.DefaultAssetMap;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.util.Config;
 import com.hypixel.hytale.server.npc.AllNPCsLoadedEvent;
@@ -31,8 +26,7 @@ public class JobsModule implements ModuleInitializer {
     private final Config<CraftingMappingsConfig> craftingMappingsConfig;
 
     private MobRewardSystem mobRewardSystem;
-    private MiningRewardSystem miningRewardSystem;
-    private CraftingRewardSystem craftingRewardSystem;
+    private MobLastAttackerSystem lastAttackerSystem;
 
     private JavaPlugin plugin;
 
@@ -59,11 +53,6 @@ public class JobsModule implements ModuleInitializer {
         }
 
         EcotaleJobsConfig config = earningsConfig;
-        boolean craftingEnabled = config.getCrafting().isEnabled();
-
-        if (craftingEnabled) {
-            plugin.getEventRegistry().register(LoadedAssetsEvent.class, CraftingRecipe.class, this::onRecipesLoaded);
-        }
 
         RewardNotifier.configure(
             config.getNotifications().isShowRewards(),
@@ -71,29 +60,13 @@ public class JobsModule implements ModuleInitializer {
             null,
             config.getNotifications().isShowMobKillBreakdown());
 
-        mobRewardSystem = new MobRewardSystem();
+        lastAttackerSystem = new MobLastAttackerSystem();
+        plugin.getEntityStoreRegistry().registerSystem(lastAttackerSystem);
+
+        mobRewardSystem = new MobRewardSystem(lastAttackerSystem);
         mobRewardSystem.init(config.getMobKills(), mappings);
 
-        CraftingMappingsConfig craftingMappings = null;
-        if (craftingEnabled) {
-            craftingMappings = craftingMappingsConfig.get();
-            craftingRewardSystem = new CraftingRewardSystem();
-            craftingRewardSystem.init(config.getCrafting(), craftingMappings);
-        }
-
         plugin.getEntityStoreRegistry().registerSystem(mobRewardSystem);
-        if (craftingEnabled && craftingRewardSystem != null) {
-            plugin.getEntityStoreRegistry().registerSystem(craftingRewardSystem);
-        }
-
-        boolean miningEnabled = config.getMining().isEnabled();
-        if (miningEnabled) {
-            miningRewardSystem = new MiningRewardSystem();
-            miningRewardSystem.init(config.getMining());
-            plugin.getEntityStoreRegistry().registerSystem(miningRewardSystem);
-        }
-
-        if (craftingEnabled) craftingMappingsConfig.save();
 
         plugin.getCommandRegistry().registerCommand(new TestOresCommand());
         plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs module loaded.");
@@ -122,13 +95,6 @@ public class JobsModule implements ModuleInitializer {
         if (mobRewardSystem != null) {
             mobRewardSystem.init(cfg.getMobKills(), mappings);
         }
-        if (miningRewardSystem != null) {
-            miningRewardSystem.init(cfg.getMining());
-        }
-        if (craftingRewardSystem != null) {
-            CraftingMappingsConfig craftMap = craftingMappingsConfig.get();
-            craftingRewardSystem.init(cfg.getCrafting(), craftMap);
-        }
 
         plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs config reloaded from disk.");
     }
@@ -151,24 +117,6 @@ public class JobsModule implements ModuleInitializer {
         }
     }
 
-    private void onRecipesLoaded(LoadedAssetsEvent<String, CraftingRecipe, DefaultAssetMap<String, CraftingRecipe>> event) {
-        CraftingMappingsConfig craftingMappings = craftingMappingsConfig.get();
-        if (!craftingMappings.isAutoDetectNewRecipes()) return;
-
-        Map<String, CraftingRecipe> loaded = event.getLoadedAssets();
-        Map<String, String> detected = CraftingAutoDetector.processLoadedRecipes(loaded, craftingMappings);
-        int added = 0;
-        for (Map.Entry<String, String> e : detected.entrySet()) {
-            craftingMappings.addItemMapping(e.getKey(), e.getValue());
-            added++;
-        }
-        if (added > 0) {
-            craftingMappingsConfig.save();
-            if (craftingRewardSystem != null) craftingRewardSystem.refreshMappings(craftingMappings);
-            plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs: auto-detected %d new recipes", added);
-        }
-    }
-
     @Override
     public void shutdown() {
         plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs module shutdown.");
@@ -178,6 +126,4 @@ public class JobsModule implements ModuleInitializer {
     public TierMappingsConfig getTierMappings() { return tierMappingsConfig.get(); }
     public CraftingMappingsConfig getCraftingMappings() { return craftingMappingsConfig.get(); }
     public MobRewardSystem getMobRewardSystem() { return mobRewardSystem; }
-    public CraftingRewardSystem getCraftingRewardSystem() { return craftingRewardSystem; }
-    public MiningRewardSystem getMiningRewardSystem() { return miningRewardSystem; }
 }

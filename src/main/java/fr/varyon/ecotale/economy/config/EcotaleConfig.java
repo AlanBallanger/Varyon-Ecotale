@@ -484,6 +484,13 @@ public class EcotaleConfig {
     }
 
     /**
+     * Numeric amount only, same grouping/decimals as {@link #format(double)} but no currency symbol.
+     */
+    public String formatAmountOnly(double amount) {
+        return formatNumeric(amount);
+    }
+
+    /**
      * Same numeric precision as {@link #format(double)}, but symbol after the amount (e.g. "1,234.56 Coins").
      */
     public String formatTrailingSymbol(double amount) {
