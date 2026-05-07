@@ -4,6 +4,8 @@ import fr.varyon.ecotale.VaryonEcotalePlugin;
 import fr.varyon.ecotale.coins.BankPermissionHelper;
 import fr.varyon.ecotale.coins.currency.BankManager;
 import fr.varyon.ecotale.coins.currency.CoinType;
+import fr.varyon.ecotale.coins.currency.TokenType;
+import fr.varyon.ecotale.economy.EconomyManager;
 import fr.varyon.ecotale.shared.EconomyBridge;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.CommandBuffer;
@@ -99,6 +101,12 @@ public final class EcotaleDepositCoinInteraction extends SimpleInstantInteractio
             return;
         }
 
+        TokenType token = TokenType.fromItemId(heldItem.getItemId());
+        if (token != null) {
+            handleTokenDeposit(context, player, playerUuid, heldItem, token);
+            return;
+        }
+
         CoinType coin = CoinType.fromItemId(heldItem.getItemId());
         if (coin == null) {
             context.getState().state = InteractionState.Failed;
@@ -151,6 +159,61 @@ public final class EcotaleDepositCoinInteraction extends SimpleInstantInteractio
             Message.raw(" déposé, ").color(Color.GREEN),
             Message.raw(bankStr).color(new Color(50, 205, 50)).bold(true),
             Message.raw(" au total en banque. ").color(Color.GREEN),
+            Message.raw("Tape /bank pour ouvrir ta banque.").color(Color.GRAY)
+        ));
+    }
+
+    private void handleTokenDeposit(
+        @Nonnull InteractionContext context,
+        @Nonnull Player player,
+        @Nonnull UUID playerUuid,
+        @Nonnull ItemStack heldItem,
+        @Nonnull TokenType token
+    ) {
+        int quantity = heldItem.getQuantity();
+
+        ItemContainer container = context.getHeldItemContainer();
+        if (container == null) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        short slot = (short) context.getHeldItemSlot();
+        EconomyManager economy = VaryonEcotalePlugin.getInstance() != null
+            ? VaryonEcotalePlugin.getInstance().getEconomyManager()
+            : null;
+        if (economy == null) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        var bankLock = BankManager.getPlayerLock(playerUuid);
+        bankLock.lock();
+        try {
+            ItemStackSlotTransaction removed = container.removeItemStackFromSlot(slot, quantity);
+            if (!removed.succeeded()) {
+                context.getState().state = InteractionState.Failed;
+                return;
+            }
+
+            if (!economy.depositToken(playerUuid, token, quantity, "Token deposit (Secondary interaction)")) {
+                container.setItemStackForSlot(slot, heldItem.withQuantity(quantity));
+                context.getState().state = InteractionState.Failed;
+                player.sendMessage(Message.raw("Impossible de déposer ce jeton.").color(Color.RED));
+                return;
+            }
+        } finally {
+            bankLock.unlock();
+        }
+
+        context.getState().state = InteractionState.Finished;
+
+        long total = economy.getTokenBalance(playerUuid, token);
+        player.sendMessage(Message.join(
+            Message.raw("x" + quantity + " " + token.getDisplayName()).color(new Color(50, 205, 50)).bold(true),
+            Message.raw(" déposé, ").color(Color.GREEN),
+            Message.raw("x" + total + " " + token.getDisplayName()).color(new Color(50, 205, 50)).bold(true),
+            Message.raw(" en banque. ").color(Color.GREEN),
             Message.raw("Tape /bank pour ouvrir ta banque.").color(Color.GRAY)
         ));
     }

@@ -28,3 +28,33 @@ items.coin_adamantite.description=Vaut 10 000
 
 items.coin_mithril.name=Pièce de Mithril
 items.coin_mithril.description=Vaut 100 000
+
+# ========== Jetons (Tokens) ==========
+tokens.coincoin=Jeton CoinCoin
+tokens.building=Jeton Construction
+tokens.faction=Jeton Faction
+
+items.token_coincoin.name=Jeton CoinCoin
+items.token_coincoin.description=Monnaie sp�ciale CoinCoin
+items.token_building.name=Jeton Construction
+items.token_building.description=Monnaie sp�ciale Construction
+items.token_faction.name=Jeton Faction
+items.token_faction.description=Monnaie sp�ciale Faction
+
+# ========== Onglet Sp�cial de la banque ==========
+gui.bank.tab.special=Sp�cial
+gui.bank.special.title=VOS JETONS
+gui.bank.special.actions=ACTIONS
+gui.bank.special.deposit=D�poser
+gui.bank.special.withdraw=Retirer
+gui.bank.special.pocket=Poche: x{0}
+gui.bank.special.bank=Banque: x{0}
+gui.bank.special.summary={0} - Poche: x{1}, Banque: x{2}
+gui.bank.special.preview={0}: x{1} | Poche: x{2}, Banque: x{3}
+gui.bank.special.deposit_success={1} d�pos� ({0} ajout�s en banque)
+gui.bank.special.withdraw_success=x{0} {1} retir�s
+gui.bank.special.deposit_failed=Impossible de d�poser ce jeton
+gui.bank.special.withdraw_failed=Impossible de retirer ce jeton
+gui.bank.special.not_enough_pocket=Pas assez de {0} en poche
+gui.bank.special.not_enough_bank=Pas assez de {0} en banque
+gui.bank.special.not_enough_space=Pas assez de place dans l'inventaire

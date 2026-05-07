@@ -271,3 +271,34 @@ gui.bank.error.no_bank_coins=No coins in bank to withdraw
 gui.bank.error.no_consolidate=No coins to consolidate
 gui.bank.consolidate_success=Coins consolidated to highest denominations
 
+
+# ========== Tokens (Special Tab) ==========
+tokens.coincoin=CoinCoin Token
+tokens.building=Building Token
+tokens.faction=Faction Token
+
+items.token_coincoin.name=CoinCoin Token
+items.token_coincoin.description=Special CoinCoin currency (separate from coins)
+items.token_building.name=Building Token
+items.token_building.description=Special Building currency (separate from coins)
+items.token_faction.name=Faction Token
+items.token_faction.description=Special Faction currency (separate from coins)
+
+gui.bank.tab.special=SPECIAL
+gui.bank.special.title=YOUR TOKENS
+gui.bank.special.actions=ACTIONS
+gui.bank.special.deposit=Deposit
+gui.bank.special.withdraw=Withdraw
+gui.bank.special.pocket=Pocket: x{0}
+gui.bank.special.bank=Bank: x{0}
+gui.bank.special.summary={0} - Pocket: x{1}, Bank: x{2}
+gui.bank.special.preview={0}: x{1} | Pocket: x{2}, Bank: x{3}
+gui.bank.special.deposit_success=Deposited x{0} {1}
+gui.bank.special.withdraw_success=Withdrew x{0} {1}
+gui.bank.special.deposit_failed=Could not deposit token
+gui.bank.special.withdraw_failed=Could not withdraw token
+gui.bank.special.not_enough_pocket=Not enough {0} in pocket
+gui.bank.special.not_enough_bank=Not enough {0} in bank
+gui.bank.special.not_enough_space=Not enough space in inventory
+gui.bank.special.economy_unavailable=Economy service unavailable
+gui.bank.special.placeholder=Select a token and amount

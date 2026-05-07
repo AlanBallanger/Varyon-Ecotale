@@ -534,12 +534,16 @@ public class EcotaleJobsConfig {
                 (c, v, e) -> c.multipliers = v, (c, e) -> c.multipliers).add()
             .append(new KeyedCodec<>("ChanceBonuses", new MapCodec<>(Codec.INTEGER, HashMap::new)),
                 (c, v, e) -> c.chanceBonuses = v, (c, e) -> c.chanceBonuses).add()
+            .append(new KeyedCodec<>("MultiplierExemptPermissions", Codec.STRING_ARRAY),
+                (c, v, e) -> c.multiplierExemptPermissions = v != null ? v.clone() : new String[0],
+                (c, e) -> c.multiplierExemptPermissions).add()
             .build();
         
         private boolean enabled = true;
         private float maxGlobalMultiplier = 5.0f; // Hard cap for safety
         private Map<String, Float> multipliers = new HashMap<>();
         private Map<String, Integer> chanceBonuses = new HashMap<>();  // e.g., "vip" -> 10 means +10% drop chance
+        private String[] multiplierExemptPermissions = new String[0];
         
         // Default configuration with MORE NOTICEABLE bonuses
         public VipConfig() {
@@ -553,12 +557,28 @@ public class EcotaleJobsConfig {
             chanceBonuses.put("vip", 5);        // +5% drop chance
             chanceBonuses.put("mvp", 10);       // +10% drop chance
             chanceBonuses.put("mvp_plus", 15);  // +15% drop chance
+            multiplierExemptPermissions = new String[] {"OP", "varyon.admin"};
+        }
+
+        private boolean matchesExempt(CommandSender player) {
+            if (multiplierExemptPermissions == null || multiplierExemptPermissions.length == 0 || player == null) {
+                return false;
+            }
+            for (String node : multiplierExemptPermissions) {
+                if (node != null && !node.isBlank() && player.hasPermission(node.trim())) {
+                    return true;
+                }
+            }
+            return false;
         }
         
         public boolean isEnabled() { return enabled; }
         public float getMaxGlobalMultiplier() { return maxGlobalMultiplier; }
         public Map<String, Float> getMultipliers() { return multipliers; }
         public Map<String, Integer> getChanceBonuses() { return chanceBonuses; }
+        public String[] getMultiplierExemptPermissions() {
+            return multiplierExemptPermissions != null ? multiplierExemptPermissions.clone() : new String[0];
+        }
         
         /**
          * Calculate the highest multiplier for a player based on their permissions.
@@ -572,6 +592,7 @@ public class EcotaleJobsConfig {
          */
         public float calculateMultiplier(CommandSender player) {
             if (!enabled || player == null || multipliers.isEmpty()) return 1.0f;
+            if (matchesExempt(player)) return 1.0f;
             
             float max = 1.0f;
             
@@ -597,6 +618,7 @@ public class EcotaleJobsConfig {
          */
         public int calculateChanceBonus(CommandSender player) {
             if (!enabled || player == null || chanceBonuses.isEmpty()) return 0;
+            if (matchesExempt(player)) return 0;
             
             int max = 0;
             
@@ -616,6 +638,7 @@ public class EcotaleJobsConfig {
          */
         public boolean hasAnyVip(CommandSender player) {
             if (!enabled || player == null) return false;
+            if (matchesExempt(player)) return false;
             
             for (String key : multipliers.keySet()) {
                 if (player.hasPermission("ecotalejobs.multiplier." + key)) {

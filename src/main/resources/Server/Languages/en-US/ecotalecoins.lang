@@ -28,3 +28,33 @@ items.coin_adamantite.description=Worth 10,000
 
 items.coin_mithril.name=Mithril Coin
 items.coin_mithril.description=Worth 100,000
+
+# ========== Tokens ==========
+tokens.coincoin=CoinCoin Token
+tokens.building=Building Token
+tokens.faction=Faction Token
+
+items.token_coincoin.name=CoinCoin Token
+items.token_coincoin.description=Special CoinCoin currency
+items.token_building.name=Building Token
+items.token_building.description=Special Building currency
+items.token_faction.name=Faction Token
+items.token_faction.description=Special Faction currency
+
+# ========== Bank Special tab ==========
+gui.bank.tab.special=SPECIAL
+gui.bank.special.title=YOUR TOKENS
+gui.bank.special.actions=ACTIONS
+gui.bank.special.deposit=Deposit
+gui.bank.special.withdraw=Withdraw
+gui.bank.special.pocket=Pocket: x{0}
+gui.bank.special.bank=Bank: x{0}
+gui.bank.special.summary={0} - Pocket: x{1}, Bank: x{2}
+gui.bank.special.preview={0}: x{1} | Pocket: x{2}, Bank: x{3}
+gui.bank.special.deposit_success=Deposited x{0} {1}
+gui.bank.special.withdraw_success=Withdrew x{0} {1}
+gui.bank.special.deposit_failed=Could not deposit token
+gui.bank.special.withdraw_failed=Could not withdraw token
+gui.bank.special.not_enough_pocket=Not enough {0} in pocket
+gui.bank.special.not_enough_bank=Not enough {0} in bank
+gui.bank.special.not_enough_space=Not enough inventory space

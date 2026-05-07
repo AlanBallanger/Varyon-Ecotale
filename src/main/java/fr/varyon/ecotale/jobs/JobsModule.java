@@ -11,6 +11,7 @@ import fr.varyon.ecotale.jobs.util.NPCAutoDetector;
 import fr.varyon.ecotale.jobs.util.RewardNotifier;
 import fr.varyon.ecotale.shared.ModuleInitializer;
 import fr.varyon.ecotale.VaryonEcotalePlugin;
+import fr.varyon.ecotale.jobs.util.JobsLogger;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.util.Config;
 import com.hypixel.hytale.server.npc.AllNPCsLoadedEvent;
@@ -70,6 +71,16 @@ public class JobsModule implements ModuleInitializer {
 
         plugin.getCommandRegistry().registerCommand(new TestOresCommand());
         plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs module loaded.");
+        boolean econDebug = plugin instanceof VaryonEcotalePlugin v
+            && v.getEconomyConfig() != null
+            && v.getEconomyConfig().isDebugMode();
+        boolean earningsDebug = config.isDebugMode();
+        if (econDebug || earningsDebug) {
+            JobsLogger.bannerInfo(
+                "[CONFIG] mob traces ON (config.json DebugMode=%s, earnings DebugMode=%s)",
+                econDebug,
+                earningsDebug);
+        }
     }
 
     /**
@@ -97,6 +108,16 @@ public class JobsModule implements ModuleInitializer {
         }
 
         plugin.getLogger().at(Level.INFO).log("[Varyon-Ecotale] Jobs config reloaded from disk.");
+        boolean econDebug = plugin instanceof VaryonEcotalePlugin v
+            && v.getEconomyConfig() != null
+            && v.getEconomyConfig().isDebugMode();
+        boolean earningsDebug = cfg.isDebugMode();
+        if (econDebug || earningsDebug) {
+            JobsLogger.bannerInfo(
+                "[CONFIG] reload mob traces ON (config.json DebugMode=%s, earnings DebugMode=%s)",
+                econDebug,
+                earningsDebug);
+        }
     }
 
     private void onNPCsLoaded(AllNPCsLoadedEvent event) {

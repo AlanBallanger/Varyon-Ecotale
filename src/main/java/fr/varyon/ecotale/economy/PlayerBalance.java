@@ -1,6 +1,7 @@
 package fr.varyon.ecotale.economy;
 
 import fr.varyon.ecotale.VaryonEcotalePlugin;
+import fr.varyon.ecotale.coins.currency.TokenType;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
@@ -38,6 +39,15 @@ public class PlayerBalance {
         .append(new KeyedCodec<>("LastTransactionTime", Codec.LONG),
             (p, v, extraInfo) -> p.lastTransactionTime = v, 
             (p, extraInfo) -> p.lastTransactionTime).add()
+        .append(new KeyedCodec<>("TokenCoinCoin", Codec.LONG),
+            (p, v, extraInfo) -> p.tokenCoinCoin = v,
+            (p, extraInfo) -> p.tokenCoinCoin).add()
+        .append(new KeyedCodec<>("TokenBuilding", Codec.LONG),
+            (p, v, extraInfo) -> p.tokenBuilding = v,
+            (p, extraInfo) -> p.tokenBuilding).add()
+        .append(new KeyedCodec<>("TokenFaction", Codec.LONG),
+            (p, v, extraInfo) -> p.tokenFaction = v,
+            (p, extraInfo) -> p.tokenFaction).add()
         .build();
     
     public static final ArrayCodec<PlayerBalance> ARRAY_CODEC = new ArrayCodec<>(CODEC, PlayerBalance[]::new, PlayerBalance::new);
@@ -48,6 +58,9 @@ public class PlayerBalance {
     private double totalSpent = 0;
     private String lastTransaction = "";
     private long lastTransactionTime = 0;
+    private long tokenCoinCoin = 0;
+    private long tokenBuilding = 0;
+    private long tokenFaction = 0;
     
     public PlayerBalance() {}
     
@@ -144,5 +157,42 @@ public class PlayerBalance {
     
     public boolean hasBalance(double amount) {
         return this.balance >= amount;
+    }
+
+    public long getTokenBalance(TokenType type) {
+        return switch (type) {
+            case COINCOIN -> tokenCoinCoin;
+            case BUILDING -> tokenBuilding;
+            case FACTION -> tokenFaction;
+        };
+    }
+
+    public boolean depositToken(TokenType type, long amount) {
+        if (amount <= 0) return false;
+        long current = getTokenBalance(type);
+        if (current + amount < current) return false;
+        setTokenBalanceInternal(type, current + amount);
+        return true;
+    }
+
+    public boolean withdrawToken(TokenType type, long amount) {
+        if (amount <= 0) return false;
+        long current = getTokenBalance(type);
+        if (current < amount) return false;
+        setTokenBalanceInternal(type, current - amount);
+        return true;
+    }
+
+    public void setTokenBalance(TokenType type, long amount) {
+        setTokenBalanceInternal(type, Math.max(0L, amount));
+    }
+
+    private void setTokenBalanceInternal(TokenType type, long amount) {
+        switch (type) {
+            case COINCOIN -> tokenCoinCoin = amount;
+            case BUILDING -> tokenBuilding = amount;
+            case FACTION -> tokenFaction = amount;
+        }
+        this.lastTransactionTime = System.currentTimeMillis();
     }
 }

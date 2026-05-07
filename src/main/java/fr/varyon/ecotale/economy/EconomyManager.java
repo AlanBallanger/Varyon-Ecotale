@@ -1,6 +1,7 @@
 package fr.varyon.ecotale.economy;
 
 import fr.varyon.ecotale.VaryonEcotalePlugin;
+import fr.varyon.ecotale.coins.currency.TokenType;
 import fr.varyon.ecotale.economy.events.BalanceChangeEvent;
 import fr.varyon.ecotale.economy.events.EcotaleEvents;
 import fr.varyon.ecotale.economy.events.TransactionEvent;
@@ -786,6 +787,83 @@ public class EconomyManager {
     public boolean tryAcquireRateLimit(java.util.UUID uuid) { return rateLimiter.tryAcquire(uuid); }
     public void resetRateLimit(java.util.UUID uuid) { rateLimiter.resetBucket(uuid); }
     public void cleanupRateLimiter() { rateLimiter.cleanup(); }
+
+    // ========== Token Bank Operations ==========
+
+    /**
+     * Get a player's bank balance for a specific token type (cache-only).
+     * Returns 0 if the player isn't in cache.
+     */
+    public long getTokenBalance(@Nonnull UUID playerUuid, @Nonnull TokenType type) {
+        PlayerBalance pb = cache.get(playerUuid);
+        return pb != null ? pb.getTokenBalance(type) : 0L;
+    }
+
+    /**
+     * Get a player's bank balance for a specific token, loading from storage if needed.
+     */
+    public long getTokenBalanceLoadingStorage(@Nonnull UUID playerUuid, @Nonnull TokenType type) {
+        return getOrLoadAccount(playerUuid).getTokenBalance(type);
+    }
+
+    /**
+     * Deposit a token amount into the bank atomically.
+     * Tokens are tracked separately from coins and from each other.
+     */
+    public boolean depositToken(@Nonnull UUID playerUuid, @Nonnull TokenType type, long amount, String reason) {
+        if (amount <= 0L) return false;
+        ReentrantLock lock = getLock(playerUuid);
+        lock.lock();
+        try {
+            PlayerBalance balance = getOrLoadAccount(playerUuid);
+            if (balance == null) return false;
+            if (!balance.depositToken(type, amount)) return false;
+            dirtyPlayers.add(playerUuid);
+            return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Withdraw a token amount from the bank atomically.
+     */
+    public boolean withdrawToken(@Nonnull UUID playerUuid, @Nonnull TokenType type, long amount, String reason) {
+        if (amount <= 0L) return false;
+        ReentrantLock lock = getLock(playerUuid);
+        lock.lock();
+        try {
+            PlayerBalance balance = cache.get(playerUuid);
+            if (balance == null) {
+                Boolean exists = storage.playerExists(playerUuid).join();
+                if (!Boolean.TRUE.equals(exists)) return false;
+                balance = storage.loadPlayer(playerUuid).join();
+                cache.put(playerUuid, balance);
+            }
+            if (!balance.withdrawToken(type, amount)) return false;
+            dirtyPlayers.add(playerUuid);
+            return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Set a player's token bank balance to a specific amount.
+     */
+    public void setTokenBalance(@Nonnull UUID playerUuid, @Nonnull TokenType type, long amount, String reason) {
+        ReentrantLock lock = getLock(playerUuid);
+        lock.lock();
+        try {
+            PlayerBalance balance = getOrLoadAccount(playerUuid);
+            if (balance != null) {
+                balance.setTokenBalance(type, Math.max(0L, amount));
+                dirtyPlayers.add(playerUuid);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
 
     // ========== Result Enums ==========
     

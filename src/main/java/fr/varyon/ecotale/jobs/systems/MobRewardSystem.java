@@ -379,10 +379,41 @@ public class MobRewardSystem extends RefChangeSystem<EntityStore, DeathComponent
         // Update statistics (atomic for thread-safety)
         totalRewardsGiven.incrementAndGet();
         totalValueInjected.addAndGet(totalValue);
-        
-        JobsLogger.debug("SUCCESS: %s -> %d coins (exact=%.2f, antiFarm=%.0f%%, vip=%.2fx, varyonHp=%.3fx, mode=%s)",
-            mobId, finalCoins, exactCoins, antiFarmMultiplier * 100, vipMultiplier, varyonHpMult,
-            CoinsBridge.isAvailable() ? "COINS" : "BALANCE");
+
+        String vipLegende = vipMultiplier <= 1.0001f
+            ? "pas de bonus (perms ecotalejobs.multiplier.*)"
+            : "bonus VIP EcotaleJobs — ex. mvp_plus=2.0 si perm ecotalejobs.multiplier.mvp_plus";
+        String brutPv = Float.isFinite(rawVaryonHp) && rawVaryonHp > 0
+            ? String.format(Locale.ROOT, "%.4f", rawVaryonHp)
+            : "n/a";
+
+        JobsLogger.debug(
+            "[MOB-REWARD] npc=%s | tier=%s | denomination=%s | tirage_plat=%d (tier %d..%d) | "
+                + "antiFarm=x%.4f | vip=x%.2f (%s) | pvMob=x%.4f (brut Varyon=%s) | "
+                + "exact_pre_piece=%.4f pieces_entier=%d valeur_cuivre_equiv=%d livraison=%s",
+            mobId,
+            tierName,
+            tier.getCoinTypeName(),
+            baseCoins,
+            tier.getMinCoins(),
+            tier.getMaxCoins(),
+            antiFarmMultiplier,
+            vipMultiplier,
+            vipLegende,
+            varyonHpMult,
+            brutPv,
+            exactCoins,
+            finalCoins,
+            totalValue,
+            CoinsBridge.isAvailable() ? "pièces physiques" : "balance");
+
+        JobsLogger.debug(
+            "[MOB-REWARD] formule plat: tirage_plat x antiFarm x vip x pvMob = exact -> %d x %.4f x %.2f x %.4f = %.4f",
+            baseCoins,
+            antiFarmMultiplier,
+            vipMultiplier,
+            varyonHpMult,
+            exactCoins);
 
         if (RewardNotifier.shouldShowMobKillBreakdown(totalValue)) {
             sendMobKillBreakdown(killerPlayerRef, mobId, tierName, tier, baseCoins, finalCoins, exactCoins,

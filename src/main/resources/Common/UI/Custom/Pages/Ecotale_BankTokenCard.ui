@@ -1,0 +1,36 @@
+﻿$E = "Ecotale_Common.ui";
+
+Group #TokenCardBtn {
+  Anchor: (Width: 140, Height: 125, Right: 10, Bottom: 8);
+  Background: (Color: #0f1525);
+  Padding: (Top: 6, Bottom: 6, Left: 6, Right: 6);
+  LayoutMode: Top;
+  OutlineColor: #3a4a6a;
+  OutlineSize: 1;
+  
+  Group #TokenIconWrapper {
+    Anchor: (Height: 48);
+    LayoutMode: Center;
+    
+    ItemIcon #TokenIcon {
+      Anchor: (Width: 44, Height: 44);
+    }
+  }
+  
+  Label #TokenName {
+    Text: "Token";
+    Style: (FontSize: 11, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center);
+    Anchor: (Bottom: 3);
+  }
+  
+  Label #TokenPocket {
+    Text: "Poche: x0";
+    Style: (FontSize: 10, TextColor: #FFD700, HorizontalAlignment: Center);
+    Anchor: (Bottom: 1);
+  }
+  
+  Label #TokenBank {
+    Text: "Banque: x0";
+    Style: (FontSize: 10, TextColor: #32CD32, HorizontalAlignment: Center);
+  }
+}

@@ -100,9 +100,14 @@ public class MySQLStorageProvider implements StorageProvider {
                     balance DOUBLE DEFAULT 0.0,
                     total_earned DOUBLE DEFAULT 0.0,
                     total_spent DOUBLE DEFAULT 0.0,
+                    token_coincoin BIGINT DEFAULT 0,
+                    token_building BIGINT DEFAULT 0,
+                    token_faction BIGINT DEFAULT 0,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 )
                 """.formatted(tablePrefix));
+
+            ensureTokenColumns(stmt);
             
             // Transactions table
             stmt.execute("""
@@ -121,18 +126,32 @@ public class MySQLStorageProvider implements StorageProvider {
                 """.formatted(tablePrefix));
         }
     }
+
+    private void ensureTokenColumns(Statement stmt) {
+        String[] cols = {"token_coincoin", "token_building", "token_faction"};
+        for (String col : cols) {
+            try {
+                stmt.execute("ALTER TABLE " + tablePrefix + "balances ADD COLUMN " + col + " BIGINT DEFAULT 0");
+            } catch (SQLException ignored) {
+                // Column already exists
+            }
+        }
+    }
     
     @Override
     public CompletableFuture<PlayerBalance> loadPlayer(@Nonnull UUID playerUuid) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                String sql = "SELECT balance, total_earned, total_spent FROM " + tablePrefix + "balances WHERE uuid = ?";
+                String sql = "SELECT balance, total_earned, total_spent, token_coincoin, token_building, token_faction FROM " + tablePrefix + "balances WHERE uuid = ?";
                 try (PreparedStatement ps = connection.prepareStatement(sql)) {
                     ps.setString(1, playerUuid.toString());
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
                             PlayerBalance pb = new PlayerBalance(playerUuid);
                             pb.setBalance(rs.getDouble("balance"), "Loaded from MySQL");
+                            pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.COINCOIN, rs.getLong("token_coincoin"));
+                            pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.BUILDING, rs.getLong("token_building"));
+                            pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.FACTION, rs.getLong("token_faction"));
                             return pb;
                         }
                     }
@@ -156,12 +175,15 @@ public class MySQLStorageProvider implements StorageProvider {
         return CompletableFuture.runAsync(() -> {
             try {
                 String sql = """
-                    INSERT INTO %sbalances (uuid, balance, total_earned, total_spent, updated_at)
-                    VALUES (?, ?, ?, ?, NOW())
+                    INSERT INTO %sbalances (uuid, balance, total_earned, total_spent, token_coincoin, token_building, token_faction, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
                     ON DUPLICATE KEY UPDATE 
                         balance = VALUES(balance),
                         total_earned = VALUES(total_earned),
                         total_spent = VALUES(total_spent),
+                        token_coincoin = VALUES(token_coincoin),
+                        token_building = VALUES(token_building),
+                        token_faction = VALUES(token_faction),
                         updated_at = NOW()
                     """.formatted(tablePrefix);
                 
@@ -170,6 +192,9 @@ public class MySQLStorageProvider implements StorageProvider {
                     ps.setDouble(2, balance.getBalance());
                     ps.setDouble(3, balance.getTotalEarned());
                     ps.setDouble(4, balance.getTotalSpent());
+                    ps.setLong(5, balance.getTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.COINCOIN));
+                    ps.setLong(6, balance.getTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.BUILDING));
+                    ps.setLong(7, balance.getTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.FACTION));
                     ps.executeUpdate();
                 }
             } catch (SQLException e) {
@@ -199,13 +224,16 @@ public class MySQLStorageProvider implements StorageProvider {
             Map<UUID, PlayerBalance> allBalances = new HashMap<>();
             
             try {
-                String sql = "SELECT uuid, balance, total_earned, total_spent FROM " + tablePrefix + "balances";
+                String sql = "SELECT uuid, balance, total_earned, total_spent, token_coincoin, token_building, token_faction FROM " + tablePrefix + "balances";
                 try (Statement stmt = connection.createStatement();
                      ResultSet rs = stmt.executeQuery(sql)) {
                     while (rs.next()) {
                         UUID uuid = UUID.fromString(rs.getString("uuid"));
                         PlayerBalance pb = new PlayerBalance(uuid);
                         pb.setBalance(rs.getDouble("balance"), "Loaded from MySQL");
+                        pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.COINCOIN, rs.getLong("token_coincoin"));
+                        pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.BUILDING, rs.getLong("token_building"));
+                        pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.FACTION, rs.getLong("token_faction"));
                         allBalances.put(uuid, pb);
                     }
                 }

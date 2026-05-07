@@ -10,7 +10,7 @@
 # Calcul récompense MOB : tirage [MinCoins, MaxCoins] puis × anti‑farm × VIP × multiplicateur PV Varyon
 # (le même que sur les HP du mob : MobScalingComponent.getHealthMultiplier()). Mets ApplyVaryonHealthScaling
 # à false seulement si tu veux des montants strictement figés sur la table, sans suivre le scaling Varyon.
-# Active DebugMode: true puis consulte les logs jobs pour voir tier / VIP / varyonHp.
+# Traces Jobs (tier / VIP / varyonHp) : DebugMode: true ci‑dessous OU DebugMode dans config.json (economy).
 # Notifications.ShowMobKillBreakdown: true affiche dans le chat le détail des gains mob (tier + multiplicateurs).
 #
 # Les clés mob : neutral, minor, moderate, major, elite, champion, boss — dans TierMappings.json.
@@ -107,6 +107,10 @@ Notifications:
 VipMultipliers:
   Enabled: true
   MaxGlobalMultiplier: 5.0
+  # Permissions : pas de bonus VIP (évite ×2 OP / admins qui ont toutes les perms implicitement).
+  MultiplierExemptPermissions:
+    - OP
+    - varyon.admin
   Multipliers:
     vip: 1.20
     mvp: 1.50

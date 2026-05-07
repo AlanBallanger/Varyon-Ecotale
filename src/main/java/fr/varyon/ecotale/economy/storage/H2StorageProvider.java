@@ -102,6 +102,9 @@ public class H2StorageProvider implements StorageProvider {
                     balance DOUBLE DEFAULT 0.0,
                     total_earned DOUBLE DEFAULT 0.0,
                     total_spent DOUBLE DEFAULT 0.0,
+                    token_coincoin BIGINT DEFAULT 0,
+                    token_building BIGINT DEFAULT 0,
+                    token_faction BIGINT DEFAULT 0,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """);
@@ -111,6 +114,13 @@ public class H2StorageProvider implements StorageProvider {
                 stmt.execute("ALTER TABLE balances ADD COLUMN IF NOT EXISTS player_name VARCHAR(64)");
             } catch (SQLException ignored) {
                 // Column already exists or syntax not supported
+            }
+
+            try {
+                stmt.execute("ALTER TABLE balances ADD COLUMN IF NOT EXISTS token_coincoin BIGINT DEFAULT 0");
+                stmt.execute("ALTER TABLE balances ADD COLUMN IF NOT EXISTS token_building BIGINT DEFAULT 0");
+                stmt.execute("ALTER TABLE balances ADD COLUMN IF NOT EXISTS token_faction BIGINT DEFAULT 0");
+            } catch (SQLException ignored) {
             }
             
             // Transactions table
@@ -140,7 +150,7 @@ public class H2StorageProvider implements StorageProvider {
     public CompletableFuture<PlayerBalance> loadPlayer(@Nonnull UUID playerUuid) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                String sql = "SELECT balance, total_earned, total_spent FROM balances WHERE uuid = ?";
+                String sql = "SELECT balance, total_earned, total_spent, token_coincoin, token_building, token_faction FROM balances WHERE uuid = ?";
                 try (PreparedStatement ps = connection.prepareStatement(sql)) {
                     ps.setString(1, playerUuid.toString());
                     try (ResultSet rs = ps.executeQuery()) {
@@ -148,6 +158,9 @@ public class H2StorageProvider implements StorageProvider {
                             PlayerBalance pb = new PlayerBalance(playerUuid);
                             // Use setBalance to set the loaded balance
                             pb.setBalance(rs.getDouble("balance"), "Loaded from DB");
+                            pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.COINCOIN, rs.getLong("token_coincoin"));
+                            pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.BUILDING, rs.getLong("token_building"));
+                            pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.FACTION, rs.getLong("token_faction"));
                             return pb;
                         }
                     }
@@ -179,15 +192,18 @@ public class H2StorageProvider implements StorageProvider {
     private void savePlayerSync(UUID playerUuid, PlayerBalance balance) {
         try {
             String sql = """
-                MERGE INTO balances (uuid, balance, total_earned, total_spent, updated_at) 
+                MERGE INTO balances (uuid, balance, total_earned, total_spent, token_coincoin, token_building, token_faction, updated_at) 
                 KEY(uuid) 
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """;
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setString(1, playerUuid.toString());
                 ps.setDouble(2, balance.getBalance());
                 ps.setDouble(3, balance.getTotalEarned());
                 ps.setDouble(4, balance.getTotalSpent());
+                ps.setLong(5, balance.getTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.COINCOIN));
+                ps.setLong(6, balance.getTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.BUILDING));
+                ps.setLong(7, balance.getTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.FACTION));
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
@@ -328,9 +344,9 @@ public class H2StorageProvider implements StorageProvider {
         try {
             connection.setAutoCommit(false);
             String sql = """
-                MERGE INTO balances (uuid, balance, total_earned, total_spent, updated_at) 
+                MERGE INTO balances (uuid, balance, total_earned, total_spent, token_coincoin, token_building, token_faction, updated_at) 
                 KEY(uuid) 
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """;
             
             int savedCount = 0;
@@ -342,6 +358,9 @@ public class H2StorageProvider implements StorageProvider {
                     ps.setDouble(2, entry.getValue().getBalance());
                     ps.setDouble(3, entry.getValue().getTotalEarned());
                     ps.setDouble(4, entry.getValue().getTotalSpent());
+                    ps.setLong(5, entry.getValue().getTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.COINCOIN));
+                    ps.setLong(6, entry.getValue().getTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.BUILDING));
+                    ps.setLong(7, entry.getValue().getTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.FACTION));
                     ps.executeUpdate();
                     savedCount++;
                 }
@@ -368,13 +387,16 @@ public class H2StorageProvider implements StorageProvider {
         return CompletableFuture.supplyAsync(() -> {
             Map<UUID, PlayerBalance> result = new HashMap<>();
             try {
-                String sql = "SELECT uuid, balance, total_earned, total_spent FROM balances";
+                String sql = "SELECT uuid, balance, total_earned, total_spent, token_coincoin, token_building, token_faction FROM balances";
                 try (Statement stmt = connection.createStatement();
                      ResultSet rs = stmt.executeQuery(sql)) {
                     while (rs.next()) {
                         UUID uuid = UUID.fromString(rs.getString("uuid"));
                         PlayerBalance pb = new PlayerBalance(uuid);
                         pb.setBalance(rs.getDouble("balance"), "Bulk load");
+                        pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.COINCOIN, rs.getLong("token_coincoin"));
+                        pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.BUILDING, rs.getLong("token_building"));
+                        pb.setTokenBalance(fr.varyon.ecotale.coins.currency.TokenType.FACTION, rs.getLong("token_faction"));
                         result.put(uuid, pb);
                     }
                 }

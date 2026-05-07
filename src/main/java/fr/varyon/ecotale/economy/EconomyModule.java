@@ -2,6 +2,7 @@ package fr.varyon.ecotale.economy;
 
 import fr.varyon.ecotale.economy.commands.BalanceCommand;
 import fr.varyon.ecotale.economy.commands.EcoAdminCommand;
+import fr.varyon.ecotale.economy.commands.EcotaleVaryonFactionDepositCommand;
 import fr.varyon.ecotale.economy.commands.PayCommand;
 import fr.varyon.ecotale.economy.config.EcotaleConfig;
 import fr.varyon.ecotale.economy.hud.BalanceHud;
@@ -45,6 +46,7 @@ public class EconomyModule implements ModuleInitializer {
         plugin.getCommandRegistry().registerCommand(new BalanceCommand());
         plugin.getCommandRegistry().registerCommand(new PayCommand());
         plugin.getCommandRegistry().registerCommand(new EcoAdminCommand());
+        plugin.getCommandRegistry().registerCommand(new EcotaleVaryonFactionDepositCommand());
 
         plugin.getEventRegistry().registerGlobal(AddPlayerToWorldEvent.class, event -> {
             Player player = event.getHolder().getComponent(Player.getComponentType());

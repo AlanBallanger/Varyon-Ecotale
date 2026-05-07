@@ -1,11 +1,13 @@
 package fr.varyon.ecotale.economy.commands;
 
 import fr.varyon.ecotale.VaryonEcotalePlugin;
+import fr.varyon.ecotale.coins.currency.TokenType;
 import fr.varyon.ecotale.economy.PlayerBalance;
 import fr.varyon.ecotale.economy.gui.EcoAdminGui;
 import fr.varyon.ecotale.economy.hud.BalanceHud;
 import fr.varyon.ecotale.economy.systems.BalanceHudSystem;
 
+import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.CommandSender;
@@ -14,6 +16,7 @@ import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.World;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 import java.awt.Color;
@@ -51,6 +54,9 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
         this.addSubCommand(new EcoReloadCommand());
         this.addSubCommand(new EcoHudCommand());
         this.addSubCommand(new EcoMetricsCommand());
+        this.addSubCommand(new EcoSetTokenCommand());
+        this.addSubCommand(new EcoGiveTokenCommand());
+        this.addSubCommand(new EcoTakeTokenCommand());
     }
     
     @NonNullDecl
@@ -89,6 +95,9 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
         commandContext.sender().sendMessage(Message.raw("  /eco metrics - Show performance stats").color(Color.GRAY));
         commandContext.sender().sendMessage(Message.raw("  /eco save - Force save data").color(Color.GRAY));
         commandContext.sender().sendMessage(Message.raw("  /eco reload - Reload configs from disk (jobs, coins, mappings)").color(Color.GRAY));
+        commandContext.sender().sendMessage(Message.raw("  /eco settoken <type> <player> <amount> - Set token balance (coincoin/building/faction)").color(Color.GRAY));
+        commandContext.sender().sendMessage(Message.raw("  /eco givetoken <type> <player> <amount> - Add tokens to player").color(Color.GRAY));
+        commandContext.sender().sendMessage(Message.raw("  /eco taketoken <type> <player> <amount> - Remove tokens from player").color(Color.GRAY));
         return CompletableFuture.completedFuture(null);
     }
     
@@ -107,10 +116,6 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
         @Override
         protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
             CommandSender sender = ctx.sender();
-            if (!(sender instanceof Player player)) {
-                ctx.sendMessage(Message.raw("This command can only be used by players").color(Color.RED));
-                return CompletableFuture.completedFuture(null);
-            }
 
             String playerName = playerNameArg.get(ctx);
             Double amount = amountArg.get(ctx);
@@ -119,16 +124,10 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                 return CompletableFuture.completedFuture(null);
             }
 
-            var ref = player.getReference();
-            if (ref == null || !ref.isValid()) return CompletableFuture.completedFuture(null);
-
-            var store = ref.getStore();
-            var world = store.getExternalData().getWorld();
-
-            return CompletableFuture.runAsync(() -> {
+            Runnable apply = () -> {
                 var resolved = VaryonEcotalePlugin.getInstance().getEconomyManager().resolveAdminTargetByName(playerName);
                 if (!resolved.success) {
-                    player.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
+                    sender.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
                     return;
                 }
                 UUID targetUuid = resolved.uuid;
@@ -137,7 +136,7 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                 economyManager.setBalance(targetUuid, amount, "Admin set");
                 updateHud(targetUuid, amount);
 
-                player.sendMessage(Message.join(
+                sender.sendMessage(Message.join(
                     Message.raw("Set ").color(Color.GREEN),
                     Message.raw(resolved.displayName).color(Color.WHITE),
                     Message.raw(": ").color(Color.GRAY),
@@ -145,7 +144,20 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                     Message.raw(" -> ").color(Color.WHITE),
                     Message.raw(VaryonEcotalePlugin.getInstance().getEconomyConfig().format(amount)).color(new Color(50, 205, 50))
                 ));
-            }, world);
+            };
+
+            if (sender instanceof Player player) {
+                var ref = player.getReference();
+                if (ref == null || !ref.isValid()) return CompletableFuture.completedFuture(null);
+                var store = ref.getStore();
+                World world = store.getExternalData().getWorld();
+                if (world == null) {
+                    return CompletableFuture.completedFuture(null);
+                }
+                return CompletableFuture.runAsync(apply, world);
+            }
+
+            return CompletableFuture.runAsync(apply, HytaleServer.SCHEDULED_EXECUTOR);
         }
     }
     
@@ -165,10 +177,6 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
         @Override
         protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
             CommandSender sender = ctx.sender();
-            if (!(sender instanceof Player player)) {
-                ctx.sendMessage(Message.raw("This command can only be used by players").color(Color.RED));
-                return CompletableFuture.completedFuture(null);
-            }
 
             String playerName = playerNameArg.get(ctx);
 
@@ -178,18 +186,10 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                 return CompletableFuture.completedFuture(null);
             }
 
-            var ref = player.getReference();
-            if (ref == null || !ref.isValid()) {
-                return CompletableFuture.completedFuture(null);
-            }
-
-            var store = ref.getStore();
-            var world = store.getExternalData().getWorld();
-
-            return CompletableFuture.runAsync(() -> {
+            Runnable apply = () -> {
                 var resolved = VaryonEcotalePlugin.getInstance().getEconomyManager().resolveAdminTargetByName(playerName);
                 if (!resolved.success) {
-                    player.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
+                    sender.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
                     return;
                 }
                 UUID targetUuid = resolved.uuid;
@@ -197,7 +197,7 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                 double newBalance = VaryonEcotalePlugin.getInstance().getEconomyManager().getBalance(targetUuid);
                 updateHud(targetUuid, newBalance);
 
-                player.sendMessage(Message.join(
+                sender.sendMessage(Message.join(
                     Message.raw("Added ").color(Color.GREEN),
                     Message.raw("+" + VaryonEcotalePlugin.getInstance().getEconomyConfig().format(amount)).color(new Color(50, 205, 50)),
                     Message.raw(" to ").color(Color.GRAY),
@@ -205,7 +205,22 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                     Message.raw(" | New balance: ").color(Color.GRAY),
                     Message.raw(VaryonEcotalePlugin.getInstance().getEconomyConfig().format(newBalance)).color(Color.WHITE)
                 ));
-            }, world);
+            };
+
+            if (sender instanceof Player player) {
+                var ref = player.getReference();
+                if (ref == null || !ref.isValid()) {
+                    return CompletableFuture.completedFuture(null);
+                }
+                var store = ref.getStore();
+                World world = store.getExternalData().getWorld();
+                if (world == null) {
+                    return CompletableFuture.completedFuture(null);
+                }
+                return CompletableFuture.runAsync(apply, world);
+            }
+
+            return CompletableFuture.runAsync(apply, HytaleServer.SCHEDULED_EXECUTOR);
         }
     }
     
@@ -225,10 +240,6 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
         @Override
         protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
             CommandSender sender = ctx.sender();
-            if (!(sender instanceof Player player)) {
-                ctx.sendMessage(Message.raw("This command can only be used by players").color(Color.RED));
-                return CompletableFuture.completedFuture(null);
-            }
 
             String playerName = playerNameArg.get(ctx);
 
@@ -238,16 +249,10 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                 return CompletableFuture.completedFuture(null);
             }
 
-            var ref = player.getReference();
-            if (ref == null || !ref.isValid()) return CompletableFuture.completedFuture(null);
-
-            var store = ref.getStore();
-            var world = store.getExternalData().getWorld();
-
-            return CompletableFuture.runAsync(() -> {
+            Runnable apply = () -> {
                 var resolved = VaryonEcotalePlugin.getInstance().getEconomyManager().resolveAdminTargetByName(playerName);
                 if (!resolved.success) {
-                    player.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
+                    sender.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
                     return;
                 }
                 UUID targetUuid = resolved.uuid;
@@ -256,7 +261,7 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                 updateHud(targetUuid, newBalance);
 
                 if (success) {
-                    player.sendMessage(Message.join(
+                    sender.sendMessage(Message.join(
                         Message.raw("Removed ").color(Color.YELLOW),
                         Message.raw("-" + VaryonEcotalePlugin.getInstance().getEconomyConfig().format(amount)).color(new Color(255, 99, 71)),
                         Message.raw(" from ").color(Color.GRAY),
@@ -265,12 +270,25 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
                         Message.raw(VaryonEcotalePlugin.getInstance().getEconomyConfig().format(newBalance)).color(Color.WHITE)
                     ));
                 } else {
-                    player.sendMessage(Message.join(
+                    sender.sendMessage(Message.join(
                         Message.raw("Insufficient funds or no account for ").color(Color.RED),
                         Message.raw(resolved.displayName).color(Color.WHITE)
                     ));
                 }
-            }, world);
+            };
+
+            if (sender instanceof Player player) {
+                var ref = player.getReference();
+                if (ref == null || !ref.isValid()) return CompletableFuture.completedFuture(null);
+                var store = ref.getStore();
+                World world = store.getExternalData().getWorld();
+                if (world == null) {
+                    return CompletableFuture.completedFuture(null);
+                }
+                return CompletableFuture.runAsync(apply, world);
+            }
+
+            return CompletableFuture.runAsync(apply, HytaleServer.SCHEDULED_EXECUTOR);
         }
     }
     
@@ -455,6 +473,231 @@ public class EcoAdminCommand extends AbstractAsyncCommand {
         BalanceHud hud = BalanceHudSystem.getHud(playerUuid);
         if (hud != null) {
             hud.updateBalance(newBalance);
+        }
+    }
+
+    private static TokenType parseTokenType(String raw) {
+        return TokenType.fromKey(raw);
+    }
+
+    private static void sendTokenTypeError(CommandContext ctx) {
+        ctx.sendMessage(Message.raw("Unknown token type. Use: coincoin, building, faction").color(Color.RED));
+    }
+
+    // ========== SET TOKEN COMMAND ==========
+    private static class EcoSetTokenCommand extends AbstractAsyncCommand {
+        private final RequiredArg<String> tokenTypeArg;
+        private final RequiredArg<String> playerNameArg;
+        private final RequiredArg<Double> amountArg;
+
+        public EcoSetTokenCommand() {
+            super("settoken", "Set a player's token balance for a specific token type");
+            this.tokenTypeArg = this.withRequiredArg("type", "Token type (coincoin, building, faction)", ArgTypes.STRING);
+            this.playerNameArg = this.withRequiredArg("player", "Player name", ArgTypes.STRING);
+            this.amountArg = this.withRequiredArg("amount", "Amount to set", ArgTypes.DOUBLE);
+        }
+
+        @NonNullDecl
+        @Override
+        protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
+            CommandSender sender = ctx.sender();
+
+            TokenType type = parseTokenType(tokenTypeArg.get(ctx));
+            if (type == null) {
+                sendTokenTypeError(ctx);
+                return CompletableFuture.completedFuture(null);
+            }
+
+            String playerName = playerNameArg.get(ctx);
+            Double amountD = amountArg.get(ctx);
+            if (amountD == null || amountD < 0) {
+                ctx.sendMessage(Message.raw("Amount must be non-negative").color(Color.RED));
+                return CompletableFuture.completedFuture(null);
+            }
+            long amount = amountD.longValue();
+
+            Runnable apply = () -> {
+                var resolved = VaryonEcotalePlugin.getInstance().getEconomyManager().resolveAdminTargetByName(playerName);
+                if (!resolved.success) {
+                    sender.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
+                    return;
+                }
+                UUID targetUuid = resolved.uuid;
+                var economy = VaryonEcotalePlugin.getInstance().getEconomyManager();
+                long oldBalance = economy.getTokenBalanceLoadingStorage(targetUuid, type);
+                economy.setTokenBalance(targetUuid, type, amount, "Admin set token");
+                sender.sendMessage(Message.join(
+                    Message.raw("Set ").color(Color.GREEN),
+                    Message.raw(resolved.displayName).color(Color.WHITE),
+                    Message.raw(" " + type.getDisplayName() + ": ").color(Color.GRAY),
+                    Message.raw("x" + oldBalance).color(Color.GRAY),
+                    Message.raw(" -> ").color(Color.WHITE),
+                    Message.raw("x" + amount).color(new Color(50, 205, 50))
+                ));
+            };
+
+            if (sender instanceof Player player) {
+                var ref = player.getReference();
+                if (ref == null || !ref.isValid()) {
+                    return CompletableFuture.completedFuture(null);
+                }
+                var store = ref.getStore();
+                World world = store.getExternalData().getWorld();
+                if (world == null) {
+                    return CompletableFuture.completedFuture(null);
+                }
+                return CompletableFuture.runAsync(apply, world);
+            }
+
+            return CompletableFuture.runAsync(apply, HytaleServer.SCHEDULED_EXECUTOR);
+        }
+    }
+
+    // ========== GIVE TOKEN COMMAND ==========
+    private static class EcoGiveTokenCommand extends AbstractAsyncCommand {
+        private final RequiredArg<String> tokenTypeArg;
+        private final RequiredArg<String> playerNameArg;
+        private final RequiredArg<Double> amountArg;
+
+        public EcoGiveTokenCommand() {
+            super("givetoken", "Add tokens to a player's bank balance");
+            this.addAliases("addtoken");
+            this.tokenTypeArg = this.withRequiredArg("type", "Token type (coincoin, building, faction)", ArgTypes.STRING);
+            this.playerNameArg = this.withRequiredArg("player", "Player name", ArgTypes.STRING);
+            this.amountArg = this.withRequiredArg("amount", "Amount to give", ArgTypes.DOUBLE);
+        }
+
+        @NonNullDecl
+        @Override
+        protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
+            CommandSender sender = ctx.sender();
+
+            TokenType type = parseTokenType(tokenTypeArg.get(ctx));
+            if (type == null) {
+                sendTokenTypeError(ctx);
+                return CompletableFuture.completedFuture(null);
+            }
+
+            String playerName = playerNameArg.get(ctx);
+            Double amountD = amountArg.get(ctx);
+            if (amountD == null || amountD <= 0) {
+                ctx.sendMessage(Message.raw("Amount must be positive").color(Color.RED));
+                return CompletableFuture.completedFuture(null);
+            }
+            long amount = amountD.longValue();
+
+            Runnable apply = () -> {
+                var resolved = VaryonEcotalePlugin.getInstance().getEconomyManager().resolveAdminTargetByName(playerName);
+                if (!resolved.success) {
+                    sender.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
+                    return;
+                }
+                UUID targetUuid = resolved.uuid;
+                var economy = VaryonEcotalePlugin.getInstance().getEconomyManager();
+                economy.getTokenBalanceLoadingStorage(targetUuid, type);
+                if (!economy.depositToken(targetUuid, type, amount, "Admin give token")) {
+                    sender.sendMessage(Message.raw("Failed to give tokens (overflow?).").color(Color.RED));
+                    return;
+                }
+                long newBalance = economy.getTokenBalance(targetUuid, type);
+                sender.sendMessage(Message.join(
+                    Message.raw("Added ").color(Color.GREEN),
+                    Message.raw("+x" + amount + " " + type.getDisplayName()).color(new Color(50, 205, 50)),
+                    Message.raw(" to ").color(Color.GRAY),
+                    Message.raw(resolved.displayName).color(Color.WHITE),
+                    Message.raw(" | New: ").color(Color.GRAY),
+                    Message.raw("x" + newBalance).color(Color.WHITE)
+                ));
+            };
+
+            if (sender instanceof Player player) {
+                var ref = player.getReference();
+                if (ref == null || !ref.isValid()) return CompletableFuture.completedFuture(null);
+                var store = ref.getStore();
+                World world = store.getExternalData().getWorld();
+                if (world == null) {
+                    return CompletableFuture.completedFuture(null);
+                }
+                return CompletableFuture.runAsync(apply, world);
+            }
+
+            return CompletableFuture.runAsync(apply, HytaleServer.SCHEDULED_EXECUTOR);
+        }
+    }
+
+    // ========== TAKE TOKEN COMMAND ==========
+    private static class EcoTakeTokenCommand extends AbstractAsyncCommand {
+        private final RequiredArg<String> tokenTypeArg;
+        private final RequiredArg<String> playerNameArg;
+        private final RequiredArg<Double> amountArg;
+
+        public EcoTakeTokenCommand() {
+            super("taketoken", "Remove tokens from a player's bank balance");
+            this.addAliases("removetoken");
+            this.tokenTypeArg = this.withRequiredArg("type", "Token type (coincoin, building, faction)", ArgTypes.STRING);
+            this.playerNameArg = this.withRequiredArg("player", "Player name", ArgTypes.STRING);
+            this.amountArg = this.withRequiredArg("amount", "Amount to remove", ArgTypes.DOUBLE);
+        }
+
+        @NonNullDecl
+        @Override
+        protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
+            CommandSender sender = ctx.sender();
+
+            TokenType type = parseTokenType(tokenTypeArg.get(ctx));
+            if (type == null) {
+                sendTokenTypeError(ctx);
+                return CompletableFuture.completedFuture(null);
+            }
+
+            String playerName = playerNameArg.get(ctx);
+            Double amountD = amountArg.get(ctx);
+            if (amountD == null || amountD <= 0) {
+                ctx.sendMessage(Message.raw("Amount must be positive").color(Color.RED));
+                return CompletableFuture.completedFuture(null);
+            }
+            long amount = amountD.longValue();
+
+            Runnable apply = () -> {
+                var resolved = VaryonEcotalePlugin.getInstance().getEconomyManager().resolveAdminTargetByName(playerName);
+                if (!resolved.success) {
+                    sender.sendMessage(Message.raw(resolved.errorMessage).color(Color.RED));
+                    return;
+                }
+                UUID targetUuid = resolved.uuid;
+                var economy = VaryonEcotalePlugin.getInstance().getEconomyManager();
+                economy.getTokenBalanceLoadingStorage(targetUuid, type);
+                boolean ok = economy.withdrawToken(targetUuid, type, amount, "Admin take token");
+                long newBalance = economy.getTokenBalance(targetUuid, type);
+                if (ok) {
+                    sender.sendMessage(Message.join(
+                        Message.raw("Removed ").color(Color.YELLOW),
+                        Message.raw("-x" + amount + " " + type.getDisplayName()).color(new Color(255, 99, 71)),
+                        Message.raw(" from ").color(Color.GRAY),
+                        Message.raw(resolved.displayName).color(Color.WHITE),
+                        Message.raw(" | New: ").color(Color.GRAY),
+                        Message.raw("x" + newBalance).color(Color.WHITE)
+                    ));
+                } else {
+                    sender.sendMessage(Message.join(
+                        Message.raw("Insufficient tokens for ").color(Color.RED),
+                        Message.raw(resolved.displayName).color(Color.WHITE)
+                    ));
+                }
+            };
+
+            if (sender instanceof Player player) {
+                var ref = player.getReference();
+                if (ref == null || !ref.isValid()) return CompletableFuture.completedFuture(null);
+                var store = ref.getStore();
+                World world = store.getExternalData().getWorld();
+                if (world == null) {
+                    return CompletableFuture.completedFuture(null);
+                }
+                return CompletableFuture.runAsync(apply, world);
+            }
+
+            return CompletableFuture.runAsync(apply, HytaleServer.SCHEDULED_EXECUTOR);
         }
     }
 }
