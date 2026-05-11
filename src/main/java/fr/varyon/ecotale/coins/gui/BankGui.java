@@ -11,6 +11,7 @@ import fr.varyon.ecotale.coins.currency.TokenType;
 import fr.varyon.ecotale.coins.transaction.SecureTransaction;
 import fr.varyon.ecotale.coins.util.TranslationHelper;
 import fr.varyon.ecotale.economy.EconomyManager;
+import fr.varyon.ecotale.economy.config.EcotaleConfig;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
@@ -622,11 +623,26 @@ public class BankGui extends InteractiveCustomUIPage<BankGui.BankGuiData> {
       }
 
       this.amountInput = "";
-      this.playerRef.sendMessage(Message.raw(this.tFr(
-         "x{0} {1} d\u00e9pos\u00e9 en banque",
-         "gui.bank.special.deposit_success",
-         "Deposited x{0} {1}",
-         amount, this.getTokenName(type))).color(Color.GREEN));
+      long totalBank = economy.getTokenBalance(playerUuid, type);
+      EcotaleConfig economyConfig = VaryonEcotalePlugin.getInstance() != null
+         ? VaryonEcotalePlugin.getInstance().getEconomyConfig()
+         : null;
+      String name = this.getTokenName(type);
+      String depStr = economyConfig != null
+         ? economyConfig.formatGroupedLong(amount) + " " + name
+         : amount + " " + name;
+      String bankStr = economyConfig != null
+         ? economyConfig.formatGroupedLong(totalBank) + " " + name
+         : totalBank + " " + name;
+      boolean fr = this.isFrenchLanguage();
+      Color greenBright = new Color(50, 205, 50);
+      this.playerRef.sendMessage(Message.join(
+         Message.raw(depStr).color(greenBright).bold(true),
+         Message.raw(fr ? " déposé, " : " deposited, ").color(Color.GREEN),
+         Message.raw(bankStr).color(greenBright).bold(true),
+         Message.raw(fr ? " au total en banque. " : " total in bank. ").color(Color.GREEN),
+         Message.raw(fr ? "Tape /bank pour ouvrir ta banque." : "Use /bank to open your bank.").color(Color.GRAY)
+      ));
    }
 
    private void executeSpecialWithdraw(Player player, UUID playerUuid) {

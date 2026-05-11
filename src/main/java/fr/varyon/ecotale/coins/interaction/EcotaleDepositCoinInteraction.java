@@ -80,6 +80,11 @@ public final class EcotaleDepositCoinInteraction extends SimpleInstantInteractio
             context.getState().state = InteractionState.Failed;
             return;
         }
+        if (!BankPermissionHelper.canDepositRightClick(player)) {
+            context.getState().state = InteractionState.Failed;
+            player.sendMessage(Message.raw("Tu n'as pas la permission de déposer à la banque au clic droit.").color(Color.RED));
+            return;
+        }
 
         Store<EntityStore> store = commandBuffer.getExternalData().getStore();
         if (store == null) {
@@ -149,10 +154,10 @@ public final class EcotaleDepositCoinInteraction extends SimpleInstantInteractio
         var plugin = VaryonEcotalePlugin.getInstance();
         var economyConfig = plugin != null ? plugin.getEconomyConfig() : null;
         String depStr = economyConfig != null
-            ? economyConfig.formatTrailingSymbol((double) value)
+            ? economyConfig.formatTrailingSymbolLong(value)
             : value + " Coins";
         String bankStr = economyConfig != null
-            ? economyConfig.formatTrailingSymbol((double) bank)
+            ? economyConfig.formatTrailingSymbolLong(bank)
             : bank + " Coins";
         player.sendMessage(Message.join(
             Message.raw(depStr).color(new Color(50, 205, 50)).bold(true),
@@ -209,12 +214,29 @@ public final class EcotaleDepositCoinInteraction extends SimpleInstantInteractio
         context.getState().state = InteractionState.Finished;
 
         long total = economy.getTokenBalance(playerUuid, token);
+        var cfgPlugin = VaryonEcotalePlugin.getInstance();
+        var economyConfig = cfgPlugin != null ? cfgPlugin.getEconomyConfig() : null;
+        String tokenFr = depositTokenLabelFr(token);
+        String depStr = economyConfig != null
+            ? economyConfig.formatGroupedLong(quantity) + " " + tokenFr
+            : quantity + " " + tokenFr;
+        String bankStr = economyConfig != null
+            ? economyConfig.formatGroupedLong(total) + " " + tokenFr
+            : total + " " + tokenFr;
         player.sendMessage(Message.join(
-            Message.raw("x" + quantity + " " + token.getDisplayName()).color(new Color(50, 205, 50)).bold(true),
+            Message.raw(depStr).color(new Color(50, 205, 50)).bold(true),
             Message.raw(" déposé, ").color(Color.GREEN),
-            Message.raw("x" + total + " " + token.getDisplayName()).color(new Color(50, 205, 50)).bold(true),
-            Message.raw(" en banque. ").color(Color.GREEN),
+            Message.raw(bankStr).color(new Color(50, 205, 50)).bold(true),
+            Message.raw(" au total en banque. ").color(Color.GREEN),
             Message.raw("Tape /bank pour ouvrir ta banque.").color(Color.GRAY)
         ));
+    }
+
+    private static String depositTokenLabelFr(TokenType token) {
+        return switch (token) {
+            case COINCOIN -> "Jeton CoinCoin";
+            case BUILDING -> "Jeton Construction";
+            case FACTION -> "Jeton Faction";
+        };
     }
 }

@@ -8,8 +8,8 @@
   ],
   "DropOnDeath": true,
   "TranslationProperties": {
-    "Name": "ecotalecoins.items.Token_Building.name",
-    "Description": "ecotalecoins.items.Token_Building.description"
+    "Name": "ecotalecoins.items.token_building.name",
+    "Description": "ecotalecoins.items.token_building.description"
   },
   "IconProperties": {
     "Scale": 0.4,

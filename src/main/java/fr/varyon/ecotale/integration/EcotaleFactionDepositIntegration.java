@@ -31,10 +31,15 @@ public final class EcotaleFactionDepositIntegration {
         if (economy == null) {
             return;
         }
-        economy.setTokenBalance(playerUuid, TokenType.FACTION, factionTokens,
-            "Varyon faction points deposit");
-
         PlayerRef online = Universe.get().getPlayer(playerUuid);
+        if (!economy.depositToken(playerUuid, TokenType.FACTION, factionTokens,
+            "Varyon faction points deposit")) {
+            if (online != null && online.isValid()) {
+                online.sendMessage(Message.raw(
+                    "Banque : impossible d'ajouter les jetons faction (débordement ?).").color(Color.RED));
+            }
+            return;
+        }
         if (online != null && online.isValid()) {
             online.sendMessage(Message.raw(
                 "Banque : jetons faction enregistrés (" + factionTokens + ").").color(Color.GREEN));

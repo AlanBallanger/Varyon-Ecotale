@@ -496,6 +496,20 @@ public class EcotaleConfig {
     public String formatTrailingSymbol(double amount) {
         return formatNumeric(amount) + " " + currencySymbol;
     }
+
+    /**
+     * Grouped integer (no fraction), for bank amounts that are always whole base units.
+     */
+    public String formatGroupedLong(long amount) {
+        return new DecimalFormat("#,##0").format(amount);
+    }
+
+    /**
+     * {@link #formatGroupedLong(long)} with currency symbol after the amount (e.g. "1,234 Coins").
+     */
+    public String formatTrailingSymbolLong(long amount) {
+        return formatGroupedLong(amount) + " " + currencySymbol;
+    }
     
     /**
      * Format amount in compact form (e.g., "$1.2M", "$500K")
